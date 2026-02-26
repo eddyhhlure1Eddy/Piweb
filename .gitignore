@@ -1,23 +1,17 @@
-# Environment
-.env
-.env.*
-!.env.example
+# Environment (template included in pre-release)
+# .env
+# .env.*
+# !.env.example
 
-# Config
-piweb.config.json
+# Config (template included in pre-release)
+# piweb.config.json
 *.local.json
 
 # Dependencies
 node_modules/
 
-# Build output (dist/ included in pre-release)
+# Build output (included in pre-release)
 # dist/
-
-# Runtime data
-data/
-workplace/
-grids/
-nul
 
 # Logs
 *.log
