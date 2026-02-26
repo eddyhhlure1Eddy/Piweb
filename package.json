@@ -1,0 +1,29 @@
+{
+  "name": "piweb",
+  "version": "2.0.0",
+  "type": "module",
+  "bin": {
+    "piweb": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "piweb --web",
+    "cli": "piweb --cli",
+    "daemon": "piweb --daemon",
+    "dev": "node --watch --loader ts-node/esm src/index.ts --web",
+    "prepare": "tsc"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@playwright/test": "^1.58.2",
+    "croner": "^10.0.1",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "@types/ws": "^8.5.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

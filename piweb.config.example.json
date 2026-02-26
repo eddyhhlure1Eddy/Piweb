@@ -1,0 +1,15 @@
+{
+  "provider": "openai",
+  "baseURL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "model": "qwen3.5-plus",
+  "skills": ["playwright-browser"],
+  "compression": {},
+  "timers": {},
+  "mcp": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"],
+      "enabled": true
+    }
+  }
+}

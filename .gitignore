@@ -1,0 +1,32 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Config
+piweb.config.json
+*.local.json
+
+# Dependencies
+node_modules/
+
+# Build output (dist/ included in pre-release)
+# dist/
+
+# Runtime data
+data/
+workplace/
+grids/
+nul
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
