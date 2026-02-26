@@ -24,3 +24,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Runtime cache
+.playwright-mcp/
