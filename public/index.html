@@ -1163,7 +1163,7 @@
       min-width: 44px; min-height: 44px;
     }
     .hamburger:hover, .hamburger:active { background: var(--surface2); }
-    /* Timer indicator — floating top-right in main area */
+    /* Timer bar — floating top-right in main area */
     .timer-bar {
       display: none;
       position: absolute;
@@ -1171,10 +1171,10 @@
       right: 16px;
       z-index: 8;
       align-items: center;
-      gap: 6px;
-      padding: 5px 14px;
+      gap: 8px;
+      padding: 6px 14px;
       background: var(--surface);
-      border: 1px solid rgba(245,158,11,0.25);
+      border: 1px solid rgba(245,158,11,0.3);
       border-radius: 20px;
       font-size: 12px;
       color: var(--yellow);
@@ -1188,10 +1188,31 @@
       background: var(--yellow);
       border-radius: 50%;
       animation: timerPulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .timer-bar .timer-exec {
+      background: var(--green);
+      animation: none;
     }
     @keyframes timerPulse {
       0%, 100% { opacity: 0.4; }
       50% { opacity: 1; }
+    }
+    .timer-bar-label {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .timer-bar-progress {
+      color: var(--text2);
+      font-size: 11px;
+    }
+    .timer-bar-countdown {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      min-width: 28px;
+      text-align: right;
     }
     .timer-stop-btn {
       background: none;
@@ -1201,12 +1222,155 @@
       padding: 2px 8px;
       font-size: 11px;
       cursor: pointer;
-      margin-left: 4px;
       transition: all var(--transition);
+      flex-shrink: 0;
     }
     .timer-stop-btn:hover {
       background: var(--red);
       color: white;
+    }
+    /* ===== Timer Dialog ===== */
+    .timer-dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .timer-dialog-overlay.open { opacity: 1; pointer-events: auto; }
+    .timer-dialog {
+      position: fixed;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%) scale(0.92);
+      width: 340px;
+      max-width: 92vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      z-index: 101;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .timer-dialog.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .timer-dialog-header {
+      padding: 16px 18px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .timer-dialog-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .timer-dialog-title svg { width: 18px; height: 18px; color: var(--yellow); }
+    .timer-dialog-close {
+      background: none;
+      border: none;
+      color: var(--text2);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .timer-dialog-close:hover { background: var(--surface2); color: var(--text); }
+    .timer-dialog-body { padding: 16px 18px; }
+    .timer-field { margin-bottom: 14px; }
+    .timer-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+    .timer-field input,
+    .timer-field textarea,
+    .timer-field select {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    .timer-field input:focus,
+    .timer-field textarea:focus,
+    .timer-field select:focus {
+      border-color: var(--yellow);
+    }
+    .timer-field textarea { resize: vertical; min-height: 60px; }
+    .timer-quick-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .timer-quick-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface2);
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .timer-quick-btn:hover, .timer-quick-btn.active {
+      border-color: var(--yellow);
+      color: var(--yellow);
+      background: var(--yellow-soft);
+    }
+    .timer-dialog-footer {
+      padding: 12px 18px 16px;
+      display: flex;
+      gap: 10px;
+    }
+    .timer-dialog-footer button {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+    }
+    .timer-btn-cancel {
+      background: var(--surface2);
+      color: var(--text2);
+    }
+    .timer-btn-cancel:hover { background: var(--surface3); color: var(--text); }
+    .timer-btn-submit {
+      background: var(--yellow);
+      color: #000;
+    }
+    .timer-btn-submit:hover { filter: brightness(1.1); }
+    .timer-btn-submit:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: none;
     }
     .mobile-header {
       display: none;
@@ -1275,6 +1439,55 @@
 <body>
   <svg style="position:absolute;width:0;height:0" aria-hidden="true"><defs><linearGradient id="piweb-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#43e97b"/><stop offset="100%" stop-color="#38f9d7"/></linearGradient><linearGradient id="piweb-txt" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e0fff7"/></linearGradient></defs></svg>
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Timer Dialog — simplified chain/one-shot modes, no cron -->
+  <div class="timer-dialog-overlay" id="timerDialogOverlay" onclick="closeTimerDialog()"></div>
+  <div class="timer-dialog" id="timerDialog">
+    <div class="timer-dialog-header">
+      <span class="timer-dialog-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3l2 2"/><path d="M19 3l-2 2"/><path d="M12 5V3"/></svg>
+        <span id="timerDialogTitleText">循环任务</span>
+      </span>
+      <button class="timer-dialog-close" onclick="closeTimerDialog()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="timer-dialog-body">
+      <div class="timer-field">
+        <label id="timerLabelLabel">任务名称</label>
+        <input type="text" id="timerLabelInput" placeholder="例：检查新闻">
+      </div>
+      <div class="timer-field">
+        <label id="timerMsgLabel">每次执行的内容</label>
+        <textarea id="timerMsgInput" placeholder="打开浏览器查看不同新闻网站..."></textarea>
+      </div>
+      <div class="timer-field">
+        <label id="timerIntervalLabel">执行间隔</label>
+        <div class="timer-quick-btns" id="timerIntervalBtns">
+          <button class="timer-quick-btn" onclick="setTimerInterval(30)">30秒</button>
+          <button class="timer-quick-btn" onclick="setTimerInterval(60)">1分钟</button>
+          <button class="timer-quick-btn" onclick="setTimerInterval(300)">5分钟</button>
+          <button class="timer-quick-btn" onclick="setTimerInterval(600)">10分钟</button>
+          <button class="timer-quick-btn" onclick="setTimerInterval(1800)">30分钟</button>
+        </div>
+        <input type="number" id="timerIntervalInput" placeholder="自定义(秒)" min="10" style="margin-top:8px">
+      </div>
+      <div class="timer-field">
+        <label id="timerCountLabel">执行次数</label>
+        <div class="timer-quick-btns" id="timerCountBtns">
+          <button class="timer-quick-btn" onclick="setTimerCount(3)">3次</button>
+          <button class="timer-quick-btn" onclick="setTimerCount(5)">5次</button>
+          <button class="timer-quick-btn" onclick="setTimerCount(10)">10次</button>
+          <button class="timer-quick-btn" onclick="setTimerCount(0)">无限</button>
+        </div>
+        <input type="number" id="timerCountInput" placeholder="自定义(0=无限)" min="0" style="margin-top:8px">
+      </div>
+    </div>
+    <div class="timer-dialog-footer">
+      <button class="timer-btn-cancel" onclick="closeTimerDialog()" id="timerCancelBtn">取消</button>
+      <button class="timer-btn-submit" onclick="submitTimer()" id="timerSubmitBtn">开始循环</button>
+    </div>
+  </div>
 
   <!-- Settings -->
   <div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
@@ -1371,8 +1584,10 @@
 
   <div class="main" style="position:relative">
     <div class="timer-bar" id="timerBar">
-      <span class="timer-pulse"></span>
-      <span id="timerCount">0 timers</span>
+      <span class="timer-pulse" id="timerPulse"></span>
+      <span class="timer-bar-label" id="timerBarLabel"></span>
+      <span class="timer-bar-progress" id="timerBarProgress"></span>
+      <span class="timer-bar-countdown" id="timerBarCountdown"></span>
       <button class="timer-stop-btn" onclick="stopAllTimers()">STOP</button>
     </div>
     <div class="mobile-header">
@@ -1382,6 +1597,9 @@
         <span class="sidebar-logo-text">PIweb</span>
       </span>
       <span style="flex:1"></span>
+      <button class="icon-btn" onclick="openTimerDialog()" title="Timer" style="min-width:32px;min-height:32px;padding:4px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3l2 2"/><path d="M19 3l-2 2"/><path d="M12 5V3"/></svg>
+      </button>
       <button class="icon-btn" onclick="cycleFontSize()" title="Font size" style="min-width:32px;min-height:32px;padding:4px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
       </button>
@@ -1437,35 +1655,188 @@
     var _toastTimer = null;
     var _escDiv = document.createElement('div');
 
-    var activeTimerCount = 0;
+    // ===== Timer System — chain-based semi-automatic =====
+    var _timerBarInterval = null; // countdown tick interval
+    var _activeTimers = [];       // cached timer list from API
 
-    function updateTimerIndicator(count) {
-      activeTimerCount = count;
-      var el = document.getElementById('timerBar');
-      if (!el) return;
-      if (count > 0) {
-        el.classList.add('active');
-        document.getElementById('timerCount').textContent = count + ' timer' + (count > 1 ? 's' : '');
-      } else {
-        el.classList.remove('active');
+    function updateTimerBar() {
+      var bar = document.getElementById('timerBar');
+      if (!bar) return;
+      if (_activeTimers.length === 0) {
+        bar.classList.remove('active');
+        if (_timerBarInterval) { clearInterval(_timerBarInterval); _timerBarInterval = null; }
+        return;
       }
+      bar.classList.add('active');
+
+      // Show info for the first (most relevant) active timer
+      var t = _activeTimers[0];
+      var label = document.getElementById('timerBarLabel');
+      var progress = document.getElementById('timerBarProgress');
+      var countdown = document.getElementById('timerBarCountdown');
+      var pulse = document.getElementById('timerPulse');
+
+      label.textContent = t.label;
+      if (t.maxFireCount) {
+        progress.textContent = t.firedCount + '/' + t.maxFireCount;
+      } else {
+        progress.textContent = '#' + t.firedCount;
+      }
+
+      // Countdown tick
+      if (_timerBarInterval) clearInterval(_timerBarInterval);
+      function tick() {
+        if (!t.fireAt) { countdown.textContent = ''; return; }
+        var remaining = Math.max(0, Math.ceil((t.fireAt - Date.now()) / 1000));
+        if (remaining <= 0) {
+          countdown.textContent = currentLang === 'zh' ? '执行中' : 'running';
+          pulse.classList.add('timer-exec');
+        } else {
+          pulse.classList.remove('timer-exec');
+          if (remaining >= 60) {
+            countdown.textContent = Math.floor(remaining / 60) + 'm' + (remaining % 60) + 's';
+          } else {
+            countdown.textContent = remaining + 's';
+          }
+        }
+      }
+      tick();
+      _timerBarInterval = setInterval(tick, 1000);
     }
 
     function pollTimerCount() {
       fetch('/api/timers').then(function(r) { return r.json(); }).then(function(timers) {
-        updateTimerIndicator(timers.length);
+        _activeTimers = timers;
+        updateTimerBar();
       }).catch(function() {});
     }
 
     function stopAllTimers() {
-      if (!confirm('Stop all active timers?')) return;
-      fetch('/api/timers/stop-all', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(data) {
-        updateTimerIndicator(0);
+      var msg = currentLang === 'zh' ? '停止所有循环任务？' : 'Stop all loop tasks?';
+      if (!confirm(msg)) return;
+      fetch('/api/timers/stop-all', { method: 'POST' }).then(function(r) { return r.json(); }).then(function() {
+        _activeTimers = [];
+        updateTimerBar();
+        showToast(currentLang === 'zh' ? '已停止所有任务' : 'All tasks stopped');
       }).catch(function() {});
     }
 
-    // Poll timer count every 10s
-    setInterval(pollTimerCount, 10000);
+    // Poll timer state every 8s
+    setInterval(pollTimerCount, 8000);
+
+    // ===== Timer Dialog — simplified chain mode =====
+    var _timerSelectedInterval = 0;
+    var _timerSelectedCount = 0;
+
+    function openTimerDialog() {
+      document.getElementById('timerDialogOverlay').classList.add('open');
+      document.getElementById('timerDialog').classList.add('open');
+      // Reset form
+      document.getElementById('timerLabelInput').value = '';
+      document.getElementById('timerMsgInput').value = '';
+      document.getElementById('timerIntervalInput').value = '';
+      document.getElementById('timerCountInput').value = '';
+      _timerSelectedInterval = 0;
+      _timerSelectedCount = 0;
+      // Clear quick btn highlights
+      var btns = document.querySelectorAll('.timer-quick-btn');
+      for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+      updateTimerDialogLang();
+    }
+
+    function closeTimerDialog() {
+      document.getElementById('timerDialogOverlay').classList.remove('open');
+      document.getElementById('timerDialog').classList.remove('open');
+    }
+
+    function setTimerInterval(seconds) {
+      _timerSelectedInterval = seconds;
+      document.getElementById('timerIntervalInput').value = seconds;
+      var btns = document.getElementById('timerIntervalBtns').querySelectorAll('.timer-quick-btn');
+      for (var i = 0; i < btns.length; i++) {
+        var v = parseInt(btns[i].getAttribute('onclick').match(/\d+/)[0]);
+        btns[i].classList.toggle('active', v === seconds);
+      }
+    }
+
+    function setTimerCount(count) {
+      _timerSelectedCount = count;
+      document.getElementById('timerCountInput').value = count;
+      var btns = document.getElementById('timerCountBtns').querySelectorAll('.timer-quick-btn');
+      for (var i = 0; i < btns.length; i++) {
+        var v = parseInt(btns[i].getAttribute('onclick').match(/\d+/)[0]);
+        btns[i].classList.toggle('active', v === count);
+      }
+    }
+
+    function submitTimer() {
+      var label = document.getElementById('timerLabelInput').value.trim();
+      var message = document.getElementById('timerMsgInput').value.trim();
+      var interval = parseInt(document.getElementById('timerIntervalInput').value) || _timerSelectedInterval;
+      var count = parseInt(document.getElementById('timerCountInput').value);
+      if (isNaN(count)) count = _timerSelectedCount;
+
+      var zh = currentLang === 'zh';
+      if (!label) { showToast(zh ? '请输入任务名称' : 'Enter task name', true); return; }
+      if (!message) { showToast(zh ? '请输入执行内容' : 'Enter task content', true); return; }
+      if (!interval || interval < 10) { showToast(zh ? '间隔至少10秒' : 'Interval must be >= 10s', true); return; }
+
+      // Chain timer: fires first time after the interval, then re-fires after each completion + interval
+      var payload = {
+        sessionId: currentSessionId,
+        label: label,
+        message: message,
+        chainIntervalSeconds: interval,
+        delaySeconds: interval
+      };
+      if (count > 0) payload.maxFireCount = count;
+
+      var btn = document.getElementById('timerSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = zh ? '创建中...' : 'Starting...';
+
+      fetch('/api/timers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        btn.disabled = false;
+        btn.textContent = zh ? '开始循环' : 'Start Loop';
+        if (data.success) {
+          closeTimerDialog();
+          pollTimerCount();
+          showToast(zh
+            ? '循环任务已启动: "' + data.timer.label + '"'
+            : 'Loop started: "' + data.timer.label + '"');
+        } else {
+          showToast((zh ? '创建失败: ' : 'Failed: ') + data.error, true);
+        }
+      }).catch(function(e) {
+        btn.disabled = false;
+        btn.textContent = zh ? '开始循环' : 'Start Loop';
+        showToast((zh ? '网络错误: ' : 'Error: ') + e.message, true);
+      });
+    }
+
+    function updateTimerDialogLang() {
+      var zh = currentLang === 'zh';
+      document.getElementById('timerDialogTitleText').textContent = zh ? '循环任务' : 'Loop Task';
+      document.getElementById('timerLabelLabel').textContent = zh ? '任务名称' : 'Task Name';
+      document.getElementById('timerMsgLabel').textContent = zh ? '每次执行的内容' : 'Task per iteration';
+      document.getElementById('timerIntervalLabel').textContent = zh ? '执行间隔' : 'Interval';
+      document.getElementById('timerCountLabel').textContent = zh ? '执行次数' : 'Iterations';
+      document.getElementById('timerCancelBtn').textContent = zh ? '取消' : 'Cancel';
+      document.getElementById('timerSubmitBtn').textContent = zh ? '开始循环' : 'Start Loop';
+      document.getElementById('timerLabelInput').placeholder = zh ? '例：检查新闻' : 'e.g., Check news';
+      document.getElementById('timerMsgInput').placeholder = zh ? '打开浏览器查看不同新闻网站...' : 'Open browser and check news sites...';
+      document.getElementById('timerMsgInput').placeholder = zh ? '定时器触发后要执行的任务描述' : 'Task description when timer fires';
+      document.getElementById('timerDelayInput').placeholder = zh ? '自定义秒数' : 'Custom seconds';
+      document.getElementById('timerCronInput').placeholder = zh ? '*/5 * * * *（每5分钟）' : '*/5 * * * * (every 5 min)';
+      // Update select options
+      var sel = document.getElementById('timerModeSelect');
+      sel.options[0].text = zh ? '延迟执行' : 'Delay';
+      sel.options[1].text = zh ? 'Cron 表达式' : 'Cron Expression';
+    }
 
     var SEND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
     var STOP_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
@@ -2004,14 +2375,22 @@
           break;
 
         case 'timer_fired':
-          // Timer fired — refresh indicator and show notification
+          // Timer fired — refresh indicator, show executing state
           pollTimerCount();
-          if (msg.sessionId === currentSessionId) {
-            // Will receive streaming events automatically
-          } else {
-            // Toast notification for other session
+          if (msg.sessionId !== currentSessionId) {
             showToast('⏰ Timer: ' + msg.label);
           }
+          break;
+
+        case 'timer_chain_next':
+          // Chain timer scheduled next iteration — refresh countdown
+          pollTimerCount();
+          break;
+
+        case 'timer_chain_done':
+          // Chain timer completed all iterations
+          pollTimerCount();
+          showToast((currentLang === 'zh' ? '循环完成: ' : 'Loop done: ') + msg.label + ' (' + msg.totalFired + 'x)');
           break;
 
         case 'run_active':
