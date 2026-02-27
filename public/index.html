@@ -3721,11 +3721,28 @@
 
     function addImageFile(file) {
       if (!file || !file.type.startsWith('image/')) return;
-      if (file.size > 5 * 1024 * 1024) { showToast(t('imageTooLarge'), true); return; }
+      if (file.size > 20 * 1024 * 1024) { showToast(t('imageTooLarge'), true); return; }
       var reader = new FileReader();
       reader.onload = function(e) {
-        pendingImages.push(e.target.result);
-        renderImagePreviews();
+        var img = new Image();
+        img.onload = function() {
+          var maxDim = 1024;
+          var w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          var compressed = canvas.toDataURL('image/jpeg', 0.75);
+          pendingImages.push(compressed);
+          renderImagePreviews();
+        };
+        img.onerror = function() { showToast(t('readImageFail'), true); };
+        img.src = e.target.result;
       };
       reader.onerror = function() { showToast(t('readImageFail'), true); };
       reader.readAsDataURL(file);
