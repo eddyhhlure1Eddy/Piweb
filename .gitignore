@@ -27,3 +27,7 @@ Thumbs.db
 
 # Runtime cache
 .playwright-mcp/
+
+# User-generated data (private — NEVER push)
+self-tools/
+data/
