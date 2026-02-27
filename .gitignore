@@ -31,4 +31,8 @@ data/
 
 # Misc garbage
 gui_C
-skills/
+
+# Skills — only keep templates, ignore user-created skills
+skills/*.md
+!skills/example.md
+!skills/SKILL_CREATION_GUIDE.md
