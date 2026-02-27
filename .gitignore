@@ -1,17 +1,13 @@
-# Environment (template included in pre-release)
-# .env
-# .env.*
-# !.env.example
+# Environment — NEVER commit real .env
+.env
+.env.*
+!.env.example
 
-# Config (template included in pre-release)
-# piweb.config.json
+# Config
 *.local.json
 
 # Dependencies
 node_modules/
-
-# Build output (included in pre-release)
-# dist/
 
 # Logs
 *.log
@@ -25,9 +21,13 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Runtime cache
+# Runtime cache / browser screenshots
 .playwright-mcp/
 
 # User-generated data (private — NEVER push)
 self-tools/
 data/
+!data/.gitkeep
+
+# Misc garbage
+gui_C
