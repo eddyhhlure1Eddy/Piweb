@@ -77,7 +77,7 @@ Unlike cloud-only chatbots, PIweb runs **locally on your hardware**, giving you 
 | Planning | `grid_run` `grid_execute` `grid_list` `grid_delete` | Multi-step autonomous task planning and execution |
 | Thinking | `soul_think` `soul_list` `soul_delete` | Multi-perspective deep analysis |
 | Parallel | `swarm_run` `swarm_execute` `swarm_list` `swarm_delete` | Multi-agent parallel task decomposition |
-| Scheduling | `set_timer` `cancel_timer` `list_timers` | Self-scheduling, wake-up timers, cron loops |
+| Scheduling | `set_timer` `cancel_timer` `list_timers` | User-triggered timers, reminders, cron loops |
 | Skills | `skill_run` `skill_list` | Direct skill invocation |
 
 ---
@@ -118,9 +118,9 @@ Decomposes tasks into parallelizable subtasks, each handled by an independent ag
 - Each agent has full tool access (files, shell, web)
 - 2–8 configurable parallel workers
 
-### Timers — Autonomous Scheduling
+### Timers — User-Triggered Scheduling
 
-The AI can set timers to wake itself up and continue working autonomously:
+Set timers and reminders when you need them — the AI only creates timers when you explicitly ask:
 
 ```
 User: Remind me to drink water in 5 minutes
@@ -131,6 +131,7 @@ PIweb: ⏰ Time to drink water!
 
 - **One-shot timers** — fire after N seconds
 - **Recurring tasks** — cron expressions (e.g., `*/30 * * * *` = every 30 min)
+- **Chain execution** — multi-fire sequences with automatic tool invocation
 - **Persistent** — survives process restarts
 - **Natural language** — parses "in half an hour", "tomorrow at 8am", "every 10 minutes"
 
@@ -354,16 +355,19 @@ Full open-source release with a proper license is planned for a future version. 
 
 ## Changelog
 
-### v2.0.0-pre (Current)
+### v2.0.0-pre (2026-02-27)
 
 - Grids: multi-step autonomous task planning
 - Soul: multi-perspective deep thinking engine
 - Swarm: parallel multi-agent execution
-- Timers: autonomous self-scheduling system
+- Timers: user-triggered scheduling with chain execution support
+- **Context Dispatcher**: intelligent per-request context optimization — 87% system prompt reduction, intent-based tool selection, memory filtering
+- **Improved long-chain task execution**: reliable multi-step tool calling with session history trimming, MCP tool caching, and API timeout protection
+- **Improved tool calling reliability**: eliminated tool hallucination (model describing tool usage in text instead of actually calling), intent-based tool filtering prevents irrelevant tool injection
 - Smart context compression (unlimited conversations)
 - Multi-provider support (15+ services, local + cloud)
 - Web Settings panel with hot-reload
-- MCP tool extensions
+- MCP tool extensions with 60s cache and 5s per-server timeout
 - Extensible skill system
 - Persistent long-term memory
 - Responsive Web UI (mobile-friendly, LAN access)
