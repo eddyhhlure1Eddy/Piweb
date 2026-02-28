@@ -492,6 +492,62 @@
     }
     .file-preview-dl:hover { background: var(--accent-soft); }
 
+    /* User file card (in chat messages) */
+    .user-file-card {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface2); border-radius: 8px; padding: 8px 12px;
+      margin-top: 6px; max-width: 300px; font-size: 12px;
+    }
+    .user-file-card-icon { font-size: 20px; flex-shrink: 0; }
+    .user-file-card-info { overflow: hidden; }
+    .user-file-card-name {
+      font-weight: 500; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .user-file-card-meta { color: var(--text2); font-size: 11px; }
+
+    /* Pending file attachment card (in preview bar) */
+    .file-pending {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2); border-radius: 8px; padding: 6px 10px;
+      position: relative; min-width: 140px; max-width: 220px;
+    }
+    .file-pending-icon { font-size: 18px; flex-shrink: 0; }
+    .file-pending-info { flex: 1; overflow: hidden; min-width: 0; }
+    .file-pending-name {
+      font-size: 11px; font-weight: 500; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .file-pending-meta { font-size: 10px; color: var(--text2); }
+    .file-pending-progress {
+      height: 3px; background: var(--border); border-radius: 2px; margin-top: 3px; overflow: hidden;
+    }
+    .file-pending-progress-bar {
+      height: 100%; background: var(--accent); border-radius: 2px;
+      transition: width .2s ease;
+    }
+    .file-pending-remove {
+      position: absolute; top: -4px; right: -4px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text2); font-size: 10px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1;
+    }
+    .file-pending-remove:hover { background: var(--danger, #e74c3c); color: #fff; border-color: transparent; }
+    .file-pending.error { border: 1px solid var(--danger, #e74c3c); }
+    .file-pending.done .file-pending-progress { display: none; }
+
+    /* Drop overlay */
+    .drop-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(76, 175, 80, 0.15); z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      pointer-events: none; border: 3px dashed var(--accent);
+    }
+    .drop-overlay-icon { font-size: 48px; margin-bottom: 12px; }
+    .drop-overlay-text { font-size: 18px; color: var(--text); font-weight: 500; }
+
     /* Image viewer overlay */
     .image-viewer-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -1614,10 +1670,10 @@
     <div class="input-area">
       <div class="image-preview-bar" id="imagePreviewBar"></div>
       <div class="input-row">
-        <button class="img-btn" onclick="document.getElementById('imageInput').click()" title="Upload image">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <button class="img-btn" onclick="document.getElementById('fileInput').click()" title="Upload attachment">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
         </button>
-        <input type="file" id="imageInput" accept="image/*" multiple style="display:none" onchange="handleImageSelect(this)">
+        <input type="file" id="fileInput" multiple style="display:none" onchange="handleFileSelect(this)">
         <textarea id="msgInput" rows="1" placeholder="Send a message..." oninput="autoResize(this)"></textarea>
         <button class="action-btn send-btn" id="actionBtn" onclick="handleAction()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -1628,6 +1684,10 @@
       <span><span class="status-dot" id="statusDot"></span><span id="statusText">Connecting...</span></span>
       <span id="sessionInfo"></span>
     </div>
+  </div>
+  <div class="drop-overlay" id="dropOverlay" style="display:none">
+    <div class="drop-overlay-icon">&#x1F4CE;</div>
+    <div class="drop-overlay-text" id="dropOverlayText">Drop files here</div>
   </div>
 
   <script>
@@ -1651,6 +1711,8 @@
     var activeToolCards = {};
     var toolCallCounter = 0;
     var pendingImages = [];
+    var pendingFiles = []; // { id, name, mime, size, path, status, progress, xhr }
+    var _fileIdCounter = 0;
     var _scrollRAF = null;
     var _toastTimer = null;
     var _escDiv = document.createElement('div');
@@ -1896,7 +1958,14 @@
         swarmTitle: '并行任务', swarmPlanning: '规划中...', swarmExecuting: '执行中', swarmComplete: '已完成', swarmFailed: '失败', swarmTasks: '任务', swarmDeps: '依赖',
         fontSmall: '小', fontMedium: '中', fontLarge: '大',
         noOutput: '(无输出)', download: '下载',
-        mcpJsonPlaceholder: '{"server-name": {"command": "...", "args": [...]}}'
+        mcpJsonPlaceholder: '{"server-name": {"command": "...", "args": [...]}}',
+        fileTooLarge: '文件过大 (最大 20MB)',
+        uploadFailed: '上传失败',
+        filesStillUploading: '文件正在上传中...',
+        dropHere: '拖放文件到这里',
+        uploadAttach: '上传附件',
+        uploading: '上传中...',
+        fileBlocked: '不允许的文件类型'
       },
       en: {
         settings: 'Settings', cancel: 'Cancel', save: 'Save',
@@ -1947,7 +2016,14 @@
         swarmTitle: 'Parallel Tasks', swarmPlanning: 'Planning...', swarmExecuting: 'Executing', swarmComplete: 'Complete', swarmFailed: 'Failed', swarmTasks: 'tasks', swarmDeps: 'depends on',
         fontSmall: 'Small', fontMedium: 'Medium', fontLarge: 'Large',
         noOutput: '(no output)', download: 'Download',
-        mcpJsonPlaceholder: '{"server-name": {"command": "...", "args": [...]}}'
+        mcpJsonPlaceholder: '{"server-name": {"command": "...", "args": [...]}}',
+        fileTooLarge: 'File too large (max 20MB)',
+        uploadFailed: 'Upload failed',
+        filesStillUploading: 'Files still uploading...',
+        dropHere: 'Drop files here',
+        uploadAttach: 'Upload attachment',
+        uploading: 'Uploading...',
+        fileBlocked: 'File type not allowed'
       }
     };
 
@@ -2235,18 +2311,24 @@
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                 'application/vnd.ms-excel','application/vnd.ms-powerpoint',
                 'audio/mpeg','audio/wav','video/mp4','video/x-msvideo','video/quicktime','video/webm',
-                'application/x-7z-compressed','application/vnd.rar'];
+                'application/x-7z-compressed','application/vnd.rar',
+                'text/plain','text/csv','text/markdown','text/xml','text/html',
+                'text/javascript','text/typescript','text/x-python',
+                'application/json','application/octet-stream'];
               if (safeMimes.indexOf(msg.file.mime) >= 0 && /^[A-Za-z0-9+/=\s]+$/.test(msg.file.data.slice(0, 100))) {
                 var filePreview = document.createElement('div');
                 filePreview.className = 'tool-file-preview';
-                var dataURI = 'data:' + msg.file.mime + ';base64,' + msg.file.data;
+                // Convert base64 to Blob URL (avoids insecure data: URI warnings on HTTP)
+                var _b64 = msg.file.data, _bc = atob(_b64), _ba = new Uint8Array(_bc.length);
+                for (var _bi = 0; _bi < _bc.length; _bi++) _ba[_bi] = _bc.charCodeAt(_bi);
+                var blobURL = URL.createObjectURL(new Blob([_ba], { type: msg.file.mime }));
                 var fName = msg.file.name || 'file';
                 if (msg.file.mime.startsWith('image/')) {
                   // Image preview — use DOM API
                   var imgWrap = document.createElement('div');
                   imgWrap.className = 'file-preview-img-wrap';
                   var img = document.createElement('img');
-                  img.src = dataURI;
+                  img.src = blobURL;
                   img.alt = fName;
                   img.className = 'file-preview-img';
                   img.onclick = function() { openImageViewer(this.src, this.alt); };
@@ -2259,7 +2341,7 @@
                   nameSpan.textContent = fName;
                   var dlLink = document.createElement('a');
                   dlLink.className = 'file-preview-dl';
-                  dlLink.href = dataURI;
+                  dlLink.href = blobURL;
                   dlLink.download = fName;
                   dlLink.textContent = t('download');
                   actions.appendChild(nameSpan);
@@ -2277,7 +2359,7 @@
                   nameSpan2.textContent = fName;
                   var dlLink2 = document.createElement('a');
                   dlLink2.className = 'file-preview-dl';
-                  dlLink2.href = dataURI;
+                  dlLink2.href = blobURL;
                   dlLink2.download = fName;
                   dlLink2.textContent = t('download');
                   docRow.appendChild(icon);
@@ -2610,6 +2692,23 @@
           // Another device sent a message on the same session — render it in real-time
           if (msg.sessionId === currentSessionId) {
             appendMessage(msg.role, msg.content);
+            // Render file cards if present
+            if (msg.files && msg.files.length > 0) {
+              var container = document.getElementById('chatContainer');
+              for (var nfi = 0; nfi < msg.files.length; nfi++) {
+                var nf = msg.files[nfi];
+                var nfd = document.createElement('div');
+                nfd.className = 'message user';
+                nfd.innerHTML = '<div class="user-file-card">' +
+                  '<span class="user-file-card-icon">' + getFileIcon(nf.mime) + '</span>' +
+                  '<div class="user-file-card-info">' +
+                    '<div class="user-file-card-name">' + esc(nf.name) + '</div>' +
+                    '<div class="user-file-card-meta">' + formatFileSize(nf.size) + '</div>' +
+                  '</div></div>';
+                container.appendChild(nfd);
+              }
+              scrollToBottom();
+            }
           }
           break;
 
@@ -3101,6 +3200,21 @@
               ui.onclick = function() { openImageViewer(this.src, this.alt); };
               ud.appendChild(ui);
               container.appendChild(ud);
+            }
+          }
+          // Render attached file cards from history
+          if (m.files && m.files.length > 0) {
+            for (var fi = 0; fi < m.files.length; fi++) {
+              var mf = m.files[fi];
+              var fd = document.createElement('div');
+              fd.className = 'message user';
+              fd.innerHTML = '<div class="user-file-card">' +
+                '<span class="user-file-card-icon">' + getFileIcon(mf.mime) + '</span>' +
+                '<div class="user-file-card-info">' +
+                  '<div class="user-file-card-name">' + esc(mf.name) + '</div>' +
+                  '<div class="user-file-card-meta">' + formatFileSize(mf.size) + '</div>' +
+                '</div></div>';
+              container.appendChild(fd);
             }
           }
         } else {
@@ -3711,17 +3825,35 @@
       _toastTimer = setTimeout(function() { toast.classList.remove('show'); _toastTimer = null; }, 3000);
     }
 
-    // ===== Image Upload =====
-    function handleImageSelect(input) {
+    // ===== File Upload =====
+    function handleFileSelect(input) {
       for (var i = 0; i < input.files.length; i++) {
-        addImageFile(input.files[i]);
+        addFile(input.files[i]);
       }
       input.value = '';
     }
 
+    function addFile(file) {
+      if (!file) return;
+      // Size check
+      if (file.size > 20 * 1024 * 1024) { showToast(t('fileTooLarge'), true); return; }
+      // Block dangerous types
+      var ext = (file.name.split('.').pop() || '').toLowerCase();
+      var blocked = ['exe','bat','cmd','sh','ps1','dll','sys','msi','com','scr','vbs','wsf'];
+      if (blocked.indexOf(ext) >= 0) { showToast(t('fileBlocked'), true); return; }
+
+      // Route: images < 5MB go through existing base64 WebSocket path
+      if (file.type.startsWith('image/') && file.size < 5 * 1024 * 1024) {
+        addImageFile(file);
+        return;
+      }
+      // Everything else: HTTP upload
+      uploadFileHTTP(file);
+    }
+
     function addImageFile(file) {
       if (!file || !file.type.startsWith('image/')) return;
-      if (file.size > 20 * 1024 * 1024) { showToast(t('imageTooLarge'), true); return; }
+      if (file.size > 20 * 1024 * 1024) { showToast(t('fileTooLarge'), true); return; }
       var reader = new FileReader();
       reader.onload = function(e) {
         var img = new Image();
@@ -3739,7 +3871,7 @@
           ctx.drawImage(img, 0, 0, w, h);
           var compressed = canvas.toDataURL('image/jpeg', 0.75);
           pendingImages.push(compressed);
-          renderImagePreviews();
+          renderAttachmentPreviews();
         };
         img.onerror = function() { showToast(t('readImageFail'), true); };
         img.src = e.target.result;
@@ -3748,19 +3880,112 @@
       reader.readAsDataURL(file);
     }
 
-    function removeImage(idx) {
-      pendingImages.splice(idx, 1);
-      renderImagePreviews();
+    function uploadFileHTTP(file) {
+      var id = ++_fileIdCounter;
+      var entry = { id: id, name: file.name, mime: file.type || 'application/octet-stream', size: file.size, path: '', status: 'uploading', progress: 0, xhr: null };
+      pendingFiles.push(entry);
+      renderAttachmentPreviews();
+
+      var xhr = new XMLHttpRequest();
+      entry.xhr = xhr;
+      xhr.open('POST', '/api/upload?name=' + encodeURIComponent(file.name));
+      xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+          entry.progress = Math.round(e.loaded / e.total * 100);
+          renderAttachmentPreviews();
+        }
+      };
+      xhr.onload = function() {
+        try {
+          var res = JSON.parse(xhr.responseText);
+          if (xhr.status === 200 && res.ok) {
+            entry.status = 'done';
+            entry.path = res.file.path;
+            entry.mime = res.file.mime;
+            entry.size = res.file.size;
+            entry.progress = 100;
+          } else {
+            entry.status = 'error';
+            showToast(t('uploadFailed') + ': ' + (res.error || xhr.status), true);
+          }
+        } catch(e) {
+          entry.status = 'error';
+          showToast(t('uploadFailed'), true);
+        }
+        renderAttachmentPreviews();
+      };
+      xhr.onerror = function() {
+        entry.status = 'error';
+        showToast(t('uploadFailed'), true);
+        renderAttachmentPreviews();
+      };
+      xhr.send(file);
     }
 
-    function renderImagePreviews() {
+    function removeImage(idx) {
+      pendingImages.splice(idx, 1);
+      renderAttachmentPreviews();
+    }
+
+    function removePendingFile(id) {
+      for (var i = 0; i < pendingFiles.length; i++) {
+        if (pendingFiles[i].id === id) {
+          if (pendingFiles[i].xhr && pendingFiles[i].status === 'uploading') {
+            pendingFiles[i].xhr.abort();
+          }
+          pendingFiles.splice(i, 1);
+          break;
+        }
+      }
+      renderAttachmentPreviews();
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    function getFileIcon(mime) {
+      if (mime.startsWith('image/')) return '\uD83D\uDDBC\uFE0F';
+      if (mime.startsWith('video/')) return '\uD83C\uDFA5';
+      if (mime.startsWith('audio/')) return '\uD83C\uDFB5';
+      if (mime.indexOf('pdf') >= 0) return '\uD83D\uDCC4';
+      if (mime.indexOf('zip') >= 0 || mime.indexOf('tar') >= 0 || mime.indexOf('gzip') >= 0 || mime.indexOf('7z') >= 0 || mime.indexOf('rar') >= 0) return '\uD83D\uDCE6';
+      if (mime.indexOf('sheet') >= 0 || mime.indexOf('excel') >= 0 || mime.indexOf('csv') >= 0) return '\uD83D\uDCCA';
+      if (mime.indexOf('presentation') >= 0 || mime.indexOf('powerpoint') >= 0) return '\uD83D\uDCCA';
+      if (mime.indexOf('word') >= 0 || mime.indexOf('document') >= 0) return '\uD83D\uDCC3';
+      return '\uD83D\uDCC1';
+    }
+
+    function renderAttachmentPreviews() {
       var bar = document.getElementById('imagePreviewBar');
-      bar.innerHTML = pendingImages.map(function(src, i) {
-        return '<div class="img-preview">' +
-          '<img src="' + src + '">' +
+      var html = '';
+      // Image previews
+      for (var i = 0; i < pendingImages.length; i++) {
+        html += '<div class="img-preview">' +
+          '<img src="' + pendingImages[i] + '">' +
           '<button class="img-preview-remove" onclick="removeImage(' + i + ')">\u00D7</button>' +
         '</div>';
-      }).join('');
+      }
+      // File previews
+      for (var j = 0; j < pendingFiles.length; j++) {
+        var f = pendingFiles[j];
+        var statusClass = f.status === 'error' ? ' error' : (f.status === 'done' ? ' done' : '');
+        html += '<div class="file-pending' + statusClass + '">' +
+          '<span class="file-pending-icon">' + getFileIcon(f.mime) + '</span>' +
+          '<div class="file-pending-info">' +
+            '<div class="file-pending-name">' + esc(f.name) + '</div>' +
+            '<div class="file-pending-meta">' + formatFileSize(f.size) +
+              (f.status === 'uploading' ? ' - ' + f.progress + '%' : '') +
+              (f.status === 'error' ? ' - ' + t('uploadFailed') : '') +
+            '</div>' +
+            (f.status === 'uploading' ? '<div class="file-pending-progress"><div class="file-pending-progress-bar" style="width:' + f.progress + '%"></div></div>' : '') +
+          '</div>' +
+          '<button class="file-pending-remove" onclick="removePendingFile(' + f.id + ')">\u00D7</button>' +
+        '</div>';
+      }
+      bar.innerHTML = html;
     }
 
     // ===== Chat =====
@@ -3776,32 +4001,47 @@
 
     function sendMessage() {
       if (sending) return;
+      // Block if files are still uploading
+      var uploading = pendingFiles.filter(function(f) { return f.status === 'uploading'; });
+      if (uploading.length > 0) { showToast(t('filesStillUploading'), true); return; }
+      // Remove errored files
+      pendingFiles = pendingFiles.filter(function(f) { return f.status === 'done'; });
+
       var input = document.getElementById('msgInput');
       var content = input.value.trim();
-      if (!content && pendingImages.length === 0) return;
-      if (!content && pendingImages.length > 0) content = t('whatInImage');
+      var hasAttachments = pendingImages.length > 0 || pendingFiles.length > 0;
+      if (!content && !hasAttachments) return;
+      if (!content && pendingImages.length > 0 && pendingFiles.length === 0) content = t('whatInImage');
+      if (!content && hasAttachments) content = '';
       input.value = '';
       input.style.height = 'auto';
 
-      if (content.charAt(0) === '/' && pendingImages.length === 0) {
+      if (content.charAt(0) === '/' && !hasAttachments) {
         handleCommand(content);
         return;
       }
 
-      // Show user message with image thumbnails
-      if (pendingImages.length > 0) {
-        var container = document.getElementById('chatContainer');
+      // Show user message with image thumbnails and file cards
+      var container = document.getElementById('chatContainer');
+      if (hasAttachments || content) {
         var div = document.createElement('div');
         div.className = 'message user';
-        var html = esc(content);
+        var html = content ? esc(content) : '';
         for (var i = 0; i < pendingImages.length; i++) {
           html += '<br><img class="chat-image" src="' + pendingImages[i] + '">';
+        }
+        for (var j = 0; j < pendingFiles.length; j++) {
+          var pf = pendingFiles[j];
+          html += '<div class="user-file-card">' +
+            '<span class="user-file-card-icon">' + getFileIcon(pf.mime) + '</span>' +
+            '<div class="user-file-card-info">' +
+              '<div class="user-file-card-name">' + esc(pf.name) + '</div>' +
+              '<div class="user-file-card-meta">' + formatFileSize(pf.size) + '</div>' +
+            '</div></div>';
         }
         div.innerHTML = html;
         container.appendChild(div);
         scrollToBottom();
-      } else {
-        appendMessage('user', content);
       }
 
       setSending(true);
@@ -3809,9 +4049,15 @@
       if (pendingImages.length > 0) {
         msgData.images = pendingImages.slice();
       }
+      if (pendingFiles.length > 0) {
+        msgData.files = pendingFiles.map(function(f) {
+          return { path: f.path, name: f.name, mime: f.mime, size: f.size };
+        });
+      }
       wsSend(msgData);
       pendingImages = [];
-      renderImagePreviews();
+      pendingFiles = [];
+      renderAttachmentPreviews();
     }
 
     function handleCommand(input) {
@@ -4138,28 +4384,46 @@
       if (header) header.parentElement.classList.toggle('collapsed');
     });
 
-    // Paste image support
+    // Paste file/image support
     document.addEventListener('paste', function(e) {
       var items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
       for (var i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
+        var item = items[i];
+        if (item.kind === 'file') {
           e.preventDefault();
-          addImageFile(items[i].getAsFile());
-          break;
+          addFile(item.getAsFile());
         }
       }
     });
 
-    // Drag & drop image (desktop)
+    // Drag & drop with overlay
+    var _dragCounter = 0;
+    document.body.addEventListener('dragenter', function(e) {
+      e.preventDefault();
+      _dragCounter++;
+      if (_dragCounter === 1) {
+        var overlay = document.getElementById('dropOverlay');
+        document.getElementById('dropOverlayText').textContent = t('dropHere');
+        overlay.style.display = 'flex';
+      }
+    });
+    document.body.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      _dragCounter--;
+      if (_dragCounter <= 0) {
+        _dragCounter = 0;
+        document.getElementById('dropOverlay').style.display = 'none';
+      }
+    });
     document.body.addEventListener('dragover', function(e) { e.preventDefault(); });
     document.body.addEventListener('drop', function(e) {
       e.preventDefault();
+      _dragCounter = 0;
+      document.getElementById('dropOverlay').style.display = 'none';
       if (e.dataTransfer && e.dataTransfer.files) {
         for (var i = 0; i < e.dataTransfer.files.length; i++) {
-          if (e.dataTransfer.files[i].type.startsWith('image/')) {
-            addImageFile(e.dataTransfer.files[i]);
-          }
+          addFile(e.dataTransfer.files[i]);
         }
       }
     });
