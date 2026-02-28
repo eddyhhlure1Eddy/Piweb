@@ -359,7 +359,6 @@ Full open-source release with a proper license is planned for a future version. 
 
 - **New branch: `Pi_linux`** — dedicated Raspberry Pi / Linux ARM64 release
   - Obfuscated dist-only build (no source code), optimized for Pi deployment
-  - Privacy-cleaned: all personal info, IPs, snapshots removed
   - Includes `piweb.service` (systemd), `install-service.sh`, `start-piweb.sh`
 - **Frontend**: added service restart button in Web UI for Pi remote management
 - **`edit_file` tool**: new targeted string-replacement tool — eliminates model falling back to bash+sed for file edits
