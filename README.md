@@ -355,6 +355,20 @@ Full open-source release with a proper license is planned for a future version. 
 
 ## Changelog
 
+### v2.0.1-pre (2026-02-27 22:00 UTC+8)
+
+- **New branch: `Pi_linux`** — dedicated Raspberry Pi / Linux ARM64 release
+  - Obfuscated dist-only build (no source code), optimized for Pi deployment
+  - Privacy-cleaned: all personal info, IPs, snapshots removed
+  - Includes `piweb.service` (systemd), `install-service.sh`, `start-piweb.sh`
+- **Frontend**: added service restart button in Web UI for Pi remote management
+- **`edit_file` tool**: new targeted string-replacement tool — eliminates model falling back to bash+sed for file edits
+- **`read_file` pagination**: added `offset`/`limit` params with line numbers for large file navigation
+- **Memory ID fix**: `memory_read` now returns entry IDs, enabling `memory_delete` to work correctly
+- **Screenshot Linux fix**: uses `python3` instead of `py`, correct path separators on Linux
+- **Dispatcher**: memory entries include IDs in system prompt; improved truncation messages
+- **Tool descriptions**: bash description now explicitly discourages file read/edit operations, guiding model to use dedicated tools
+
 ### v2.0.0-pre (2026-02-27)
 
 - Grids: multi-step autonomous task planning
