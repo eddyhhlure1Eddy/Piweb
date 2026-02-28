@@ -1,0 +1,16 @@
+{
+  "preset": "custom",
+  "provider": "openai",
+  "baseURL": "http://localhost:8000/v1",
+  "maxTokens": 8192,
+  "mcp": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp"
+      ],
+      "enabled": true
+    }
+  }
+}
