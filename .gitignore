@@ -32,6 +32,10 @@ data/
 # Misc garbage
 gui_C
 
+# Grids — user-generated task data (private)
+grids/
+!grids/.gitkeep
+
 # Skills — only keep templates, ignore user-created skills
 skills/*.md
 !skills/example.md

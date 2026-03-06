@@ -88,6 +88,23 @@ You can also set API keys via the Web Settings panel, which writes to `.env` aut
 | Groq | `https://api.groq.com/openai/v1` | llama-3.3-70b-versatile, qwen-qwq-32b | [console.groq.com](https://console.groq.com) |
 | Together AI | `https://api.together.xyz/v1` | Llama-4-Maverick-17B | [api.together.xyz](https://api.together.xyz) |
 
+### FunnyPi (Recommended for Claude)
+
+| Provider | Base URL | Models | Get API Key |
+|----------|----------|--------|------------|
+| FunnyPi | `https://funnypi.com/proxy/v1` | Claude Sonnet 4 / Opus / Haiku (via smart scheduling) | [funnypi.com](https://funnypi.com) |
+
+FunnyPi provides one-click access to Claude models with built-in intelligent scheduling:
+
+1. Select **FunnyPi** from the provider dropdown
+2. Enter your FunnyPi API key (`pi-xxxx...`)
+3. Choose a scheduling plan:
+   - **Plan A (Performance)** — Maximize response quality
+   - **Plan B (Budget)** — Minimize cost while maintaining quality
+4. Click Save — no model name or base URL configuration needed
+
+The scheduler handles model routing automatically. You interact normally; the system optimizes everything in the background.
+
 ### Custom Provider
 
 Any OpenAI-compatible API can be used. Select "Custom" in the provider dropdown and enter the base URL manually.
@@ -199,6 +216,15 @@ This overrides the default PIweb personality. Leave empty to use the built-in pr
 ### Max Tokens
 
 Controls the maximum output length per response. Default is 8192. Increase for longer responses, decrease for faster/cheaper responses.
+
+## Smart Hybrid Scheduling
+
+The scheduler intelligently optimizes model usage across different stages of a conversation, balancing quality and cost automatically.
+
+When using FunnyPi, scheduling is configured automatically — just select a plan and start chatting.
+
+- **Plan A (Performance)**: Maximize response quality and execution accuracy.
+- **Plan B (Budget)**: Minimize cost while maintaining acceptable quality.
 
 ## FAQ
 

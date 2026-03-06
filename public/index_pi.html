@@ -397,6 +397,11 @@
       color: var(--text2);
     }
     .thinking-block.collapsed .thinking-content { display: none; }
+    .thinking-block.reflection { border-color: #a78bfa; }
+    .thinking-block.reflection .thinking-icon { border-color: #a78bfa; border-top-color: transparent; }
+    .thinking-block.reflection .thinking-label { color: #a78bfa; }
+    .thinking-block.reflection.done .thinking-icon { border-color: var(--text3); border-top-color: var(--text3); }
+    .thinking-block.reflection.done .thinking-label { color: var(--text3); }
 
     /* Tool Cards */
     .tool-card {
@@ -1220,6 +1225,60 @@
     }
     .hamburger:hover, .hamburger:active { background: var(--surface2); }
     /* Timer bar — floating top-right in main area */
+    /* PIweb service button states */
+    #piwebServiceBtn { position: relative; }
+    #piwebServiceBtn.svc-running { color: var(--green); border-color: var(--green); }
+    #piwebServiceBtn.svc-stopped { color: var(--red); border-color: var(--red); }
+    #piwebServiceBtn.svc-loading { color: var(--yellow); border-color: var(--yellow); pointer-events: none; }
+    #piwebServiceBtn.svc-loading svg { animation: spin 0.8s linear infinite; }
+    #piwebServiceBtn::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+    }
+    #piwebServiceBtn.svc-running::after { background: var(--green); }
+    #piwebServiceBtn.svc-stopped::after { background: var(--red); }
+    #piwebServiceBtn.svc-loading::after { background: var(--yellow); }
+
+    /* WiFi Panel */
+    .wifi-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;opacity:0;transition:opacity .2s}
+    .wifi-overlay.show{opacity:1}
+    .wifi-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:340px;max-height:80vh;overflow-y:auto;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transition:all .2s}
+    .wifi-modal.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    .wifi-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .wifi-header h3{margin:0;font-size:17px;font-weight:600;color:var(--text)}
+    .wifi-close{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1}
+    .wifi-close:hover{color:var(--text)}
+    .wifi-status-box{padding:12px;border-radius:var(--radius-sm);background:var(--surface2);margin-bottom:16px;font-size:13px;color:var(--text2);border-left:3px solid var(--text3)}
+    .wifi-status-box.ok{border-left-color:var(--green)}
+    .wifi-status-box.err{border-left-color:var(--red)}
+    .wifi-status-box.ap{border-left-color:var(--yellow)}
+    .wifi-status-box strong{color:var(--text);display:block;margin-bottom:2px}
+    .wifi-status-box .wifi-ip{font-size:11px;opacity:0.7;margin-top:4px}
+    .wifi-scan-btn{width:100%;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;margin-bottom:12px;transition:all .2s}
+    .wifi-scan-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .wifi-list{margin-bottom:12px}
+    .wifi-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:background .15s;margin-bottom:2px}
+    .wifi-item:hover{background:var(--surface2)}
+    .wifi-item.active{background:rgba(16,185,129,0.1)}
+    .wifi-item .wifi-ssid{font-size:14px;font-weight:500;color:var(--text)}
+    .wifi-item .wifi-meta{font-size:11px;color:var(--text3);margin-top:2px}
+    .wifi-item .wifi-bars{display:flex;gap:2px;align-items:flex-end}
+    .wifi-item .wifi-bars span{width:3px;border-radius:1px;background:var(--border)}
+    .wifi-item .wifi-bars span.on{background:var(--accent)}
+    .wifi-connect-box{margin-top:8px;padding:12px;background:var(--surface2);border-radius:var(--radius-sm)}
+    .wifi-connect-box .wifi-target{font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px}
+    .wifi-connect-box input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:14px;box-sizing:border-box}
+    .wifi-connect-box input:focus{outline:none;border-color:var(--accent)}
+    .wifi-connect-btn{width:100%;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;transition:opacity .2s}
+    .wifi-connect-btn:hover{opacity:0.9}
+    .wifi-connect-btn:disabled{opacity:0.4;cursor:not-allowed}
+    .wifi-empty{padding:20px;text-align:center;color:var(--text3);font-size:13px}
+    #wifiBtn{position:relative}
+
     .timer-bar {
       display: none;
       position: absolute;
@@ -1566,7 +1625,7 @@
         </div>
         <div class="settings-field" id="baseURLField">
           <label>Base URL</label>
-          <input id="setBaseURL" type="text" placeholder="e.g. http://192.168.31.11:8000/v1">
+          <input id="setBaseURL" type="text" placeholder="e.g. http://localhost:8000/v1">
         </div>
         <div class="settings-field" id="apiKeyField">
           <label>API Key</label>
@@ -1578,11 +1637,11 @@
           </div>
           <div id="keyStatus" style="font-size:11px;margin-top:4px;color:var(--text3)"></div>
         </div>
-        <div class="settings-field" id="modelField">
+        <div class="settings-field">
           <label>Model</label>
           <input id="setModel" type="text" placeholder="Leave empty for auto-detect">
         </div>
-        <div class="settings-field" id="maxTokensField">
+        <div class="settings-field">
           <label>Max Tokens</label>
           <input id="setMaxTokens" type="number" placeholder="Default: auto">
         </div>
@@ -1591,30 +1650,6 @@
         <div class="settings-section-label">System Prompt</div>
         <div class="settings-field">
           <textarea id="setSystemPrompt" rows="5" placeholder="Custom system prompt (leave empty for default)"></textarea>
-        </div>
-      </div>
-      <!-- Scheduler section hidden — controlled via FunnyPi Plan A/B or piweb.config.json -->
-      <div id="schedulerSection" style="display:none">
-        <select id="setSchedulerMode"><option value="none"></option><option value="performance"></option><option value="budget"></option><option value="custom"></option></select>
-        <input id="schInitInput" type="hidden"><input id="schWorkInput" type="hidden"><input id="schReflectInput" type="hidden"><input id="schCompressInput" type="hidden">
-      </div>
-      <div class="settings-section" id="funnypiPlanSection" style="display:none">
-        <div class="settings-section-label">FunnyPi Plan</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <label class="funnypi-plan-card" id="planCardA" onclick="selectFunnyPiPlan('performance')" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:12px;border:2px solid var(--border);border-radius:var(--radius-sm);transition:var(--transition)">
-            <input type="radio" name="funnypiPlan" value="performance" style="margin-top:1px" checked>
-            <div style="flex:1">
-              <div style="font-weight:600;font-size:13px">Plan A</div>
-              <div style="font-size:11px;color:var(--text2)">Quality first, best results</div>
-            </div>
-          </label>
-          <label class="funnypi-plan-card" id="planCardB" onclick="selectFunnyPiPlan('budget')" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:12px;border:2px solid var(--border);border-radius:var(--radius-sm);transition:var(--transition)">
-            <input type="radio" name="funnypiPlan" value="budget" style="margin-top:1px">
-            <div style="flex:1">
-              <div style="font-weight:600;font-size:13px">Plan B</div>
-              <div style="font-size:11px;color:var(--text2)">Balanced speed & cost</div>
-            </div>
-          </label>
         </div>
       </div>
       <div class="settings-section">
@@ -1655,6 +1690,9 @@
       <button class="icon-btn" onclick="openSettings()" title="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l-.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
+      <button class="icon-btn" id="wifiBtn" onclick="openWiFi()" title="WiFi" style="position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
+      </button>
       <button class="icon-btn" onclick="newSession()" id="newBtn" title="New">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
@@ -1677,6 +1715,12 @@
         <span class="sidebar-logo-text">PIweb</span>
       </span>
       <span style="flex:1"></span>
+      <button class="icon-btn" id="piwebServiceBtn" onclick="togglePiwebService()" title="PIweb Service" style="min-width:32px;min-height:32px;padding:4px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </button>
+      <button class="icon-btn" id="wifiBtnMobile" onclick="openWiFi()" title="WiFi" style="min-width:32px;min-height:32px;padding:4px;position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
+      </button>
       <button class="icon-btn" onclick="openTimerDialog()" title="Timer" style="min-width:32px;min-height:32px;padding:4px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3l2 2"/><path d="M19 3l-2 2"/><path d="M12 5V3"/></svg>
       </button>
@@ -1709,8 +1753,27 @@
       <span id="sessionInfo"></span>
     </div>
   </div>
+  <!-- WiFi Panel -->
+  <div id="wifiPanel" style="display:none">
+    <div class="wifi-overlay" onclick="closeWiFi()"></div>
+    <div class="wifi-modal">
+      <div class="wifi-header">
+        <h3 id="wifiTitle">Network</h3>
+        <button class="wifi-close" onclick="closeWiFi()">&times;</button>
+      </div>
+      <div id="wifiStatus" class="wifi-status-box">Loading...</div>
+      <button class="wifi-scan-btn" onclick="wifiScan()">Scan Networks</button>
+      <div id="wifiList" class="wifi-list"></div>
+      <div id="wifiConnect" class="wifi-connect-box" style="display:none">
+        <div class="wifi-target" id="wifiTarget"></div>
+        <input type="password" id="wifiPwd" placeholder="WiFi Password" autocomplete="off">
+        <button class="wifi-connect-btn" id="wifiGoBtn" onclick="wifiDoConnect()">Connect</button>
+      </div>
+    </div>
+  </div>
+
   <div class="drop-overlay" id="dropOverlay" style="display:none">
-    <div class="drop-overlay-icon">&#x1F4CE;</div>
+    <div class="drop-overlay-icon">+</div>
     <div class="drop-overlay-text" id="dropOverlayText">Drop files here</div>
   </div>
 
@@ -1724,6 +1787,7 @@
     var currentAssistantText = '';
     var thinkingEl = null;
     var thinkingText = '';
+    var nextThinkingIsReflection = false;
     var skills = [];
     var activeSkills = (function() {
       try {
@@ -1735,7 +1799,7 @@
     var activeToolCards = {};
     var toolCallCounter = 0;
     var pendingImages = [];
-    var pendingFiles = []; // { id, name, mime, size, path, status, progress, xhr }
+    var pendingFiles = [];
     var _fileIdCounter = 0;
     var _scrollRAF = null;
     var _toastTimer = null;
@@ -1795,6 +1859,318 @@
         _activeTimers = timers;
         updateTimerBar();
       }).catch(function() {});
+    }
+
+    // PIweb service control via systemctl
+    var _svcStatus = 'unknown'; // 'running' | 'stopped' | 'unknown'
+
+    function updateSvcBtn(status) {
+      _svcStatus = status;
+      var btn = document.getElementById('piwebServiceBtn');
+      if (!btn) return;
+      btn.className = 'icon-btn' + (status === 'running' ? ' svc-running' : status === 'stopped' ? ' svc-stopped' : ' svc-loading');
+      btn.title = status === 'running' ? 'PIweb running (click to restart)' : status === 'stopped' ? 'PIweb stopped (click to start)' : 'Loading...';
+    }
+
+    function checkSvcStatus() {
+      fetch('/api/service/status').then(function(r) { return r.json(); }).then(function(d) {
+        updateSvcBtn(d.active ? 'running' : 'stopped');
+      }).catch(function() { updateSvcBtn('unknown'); });
+    }
+
+    function togglePiwebService() {
+      if (_svcStatus === 'running') {
+        var msg = currentLang === 'zh' ? '重启 PIweb 服务？' : 'Restart PIweb service?';
+        if (!confirm(msg)) return;
+        updateSvcBtn('loading');
+        fetch('/api/service/restart', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            showToast(d.success ? (currentLang === 'zh' ? '正在重启...' : 'Restarting...') : (d.error || 'Failed'));
+            setTimeout(checkSvcStatus, 3000);
+          }).catch(function(e) { showToast('Error: ' + e); updateSvcBtn('unknown'); });
+      } else {
+        var msg2 = currentLang === 'zh' ? '启动 PIweb 服务？' : 'Start PIweb service?';
+        if (!confirm(msg2)) return;
+        updateSvcBtn('loading');
+        fetch('/api/service/start', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            showToast(d.success ? (currentLang === 'zh' ? 'PIweb 已启动' : 'PIweb started') : (d.error || 'Failed'));
+            setTimeout(checkSvcStatus, 3000);
+          }).catch(function(e) { showToast('Error: ' + e); updateSvcBtn('unknown'); });
+      }
+    }
+
+    // Check service status on load and periodically
+    checkSvcStatus();
+    setInterval(checkSvcStatus, 30000);
+
+    // ===== WiFi =====
+    var _wifiSSID = null;
+
+    function openWiFi() {
+      var panel = document.getElementById('wifiPanel');
+      panel.style.display = 'block';
+      document.getElementById('wifiTitle').textContent = currentLang === 'zh' ? 'Network' : 'Network';
+      requestAnimationFrame(function() {
+        panel.querySelector('.wifi-overlay').classList.add('show');
+        panel.querySelector('.wifi-modal').classList.add('show');
+      });
+      wifiRefreshStatus();
+      wifiScan();
+    }
+
+    function closeWiFi() {
+      var panel = document.getElementById('wifiPanel');
+      panel.querySelector('.wifi-overlay').classList.remove('show');
+      panel.querySelector('.wifi-modal').classList.remove('show');
+      setTimeout(function() { panel.style.display = 'none'; }, 200);
+      _wifiSSID = null;
+      document.getElementById('wifiConnect').style.display = 'none';
+    }
+
+    var _wifiAutoScanning = false;
+
+    function wifiRefreshStatus() {
+      var el = document.getElementById('wifiStatus');
+      el.className = 'wifi-status-box';
+      el.innerHTML = 'Checking...';
+      fetch('/api/wifi/status').then(function(r) { return r.json(); }).then(function(d) {
+        if (d.hotspot) {
+          el.className = 'wifi-status-box ap';
+          el.innerHTML = '<strong>Hotspot Mode</strong>PiWeb-Setup<div class="wifi-ip">IP: 10.42.0.1</div>';
+        } else if (d.connected) {
+          el.className = 'wifi-status-box ok';
+          el.innerHTML = '<strong>Connected</strong>' + (d.ssid || 'Unknown') +
+            '<div class="wifi-ip">IP: ' + (d.ip || '?') + ':3000</div>';
+        } else {
+          el.className = 'wifi-status-box err';
+          el.innerHTML = '<strong>Disconnected</strong>Select a WiFi network';
+        }
+      }).catch(function() {
+        el.className = 'wifi-status-box';
+        el.innerHTML = '<strong>Server unreachable</strong>Scanning for PiWeb on network...';
+        if (!_wifiAutoScanning) {
+          _wifiAutoScanning = true;
+          var btn = document.getElementById('wifiGoBtn');
+          btn.disabled = true;
+          btn.textContent = 'Scanning...';
+          wifiStartScan('', location.hostname, location.port || '3000', btn, el);
+        }
+      });
+    }
+
+    function wifiScan() {
+      var el = document.getElementById('wifiList');
+      el.innerHTML = '<div class="wifi-empty">Scanning...</div>';
+      document.getElementById('wifiConnect').style.display = 'none';
+      _wifiSSID = null;
+      fetch('/api/wifi/scan').then(function(r) { return r.json(); }).then(function(d) {
+        if (!d.networks || !d.networks.length) {
+          el.innerHTML = '<div class="wifi-empty">No networks found</div>';
+          return;
+        }
+        el.innerHTML = d.networks.map(function(n) {
+          var bars = [20, 40, 60, 80].map(function(t, i) {
+            return '<span style="height:' + (5 + i * 3) + 'px" class="' + (n.signal >= t ? 'on' : '') + '"></span>';
+          }).join('');
+          return '<div class="wifi-item' + (n.connected ? ' active' : '') + '" onclick="wifiSelect(\'' + n.ssid.replace(/'/g, "\\'").replace(/\\/g, "\\\\") + '\')">' +
+            '<div><div class="wifi-ssid">' + n.ssid + (n.connected ? ' &#10003;' : '') + '</div>' +
+            '<div class="wifi-meta">' + (n.security || 'Open') + ' · ' + n.signal + '%</div></div>' +
+            '<div class="wifi-bars">' + bars + '</div></div>';
+        }).join('');
+      }).catch(function() {
+        el.innerHTML = '<div class="wifi-empty">Server unreachable — scanning for PiWeb...</div>';
+      });
+    }
+
+    function wifiSelect(ssid) {
+      _wifiSSID = ssid;
+      var box = document.getElementById('wifiConnect');
+      box.style.display = 'block';
+      document.getElementById('wifiTarget').textContent = ssid;
+      var inp = document.getElementById('wifiPwd');
+      inp.value = '';
+      inp.focus();
+      inp.onkeydown = function(e) { if (e.key === 'Enter') wifiDoConnect(); };
+      var btn = document.getElementById('wifiGoBtn');
+      btn.textContent = 'Connect';
+      btn.disabled = false;
+      btn.style.background = '';
+    }
+
+    function wifiDoConnect() {
+      if (!_wifiSSID) return;
+      var pwd = document.getElementById('wifiPwd').value;
+      var btn = document.getElementById('wifiGoBtn');
+      var statusEl = document.getElementById('wifiStatus');
+      btn.disabled = true;
+      btn.textContent = 'Switching...';
+      var targetSSID = _wifiSSID;
+      var oldHost = location.hostname;
+      var port = location.port || '3000';
+
+      fetch('/api/wifi/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ssid: targetSSID, password: pwd })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.accepted) {
+          wifiWaitForDrop(targetSSID, oldHost, port, btn, statusEl);
+        } else if (d.error) {
+          btn.textContent = 'Failed';
+          btn.style.background = 'var(--red)';
+          statusEl.className = 'wifi-status-box err';
+          statusEl.innerHTML = '<strong>Error</strong>' + d.error;
+          setTimeout(function() {
+            btn.textContent = 'Connect';
+            btn.style.background = '';
+            btn.disabled = false;
+          }, 3000);
+        }
+      }).catch(function() {
+        wifiStartScan(targetSSID, oldHost, port, btn, statusEl);
+      });
+    }
+
+    function wifiWaitForDrop(targetSSID, oldHost, port, btn, statusEl) {
+      var elapsed = 0;
+      statusEl.className = 'wifi-status-box';
+      statusEl.innerHTML = '<strong>Switching to ' + targetSSID + '...</strong>' +
+        'Waiting for network change';
+
+      function heartbeat() {
+        var ctrl = new AbortController();
+        var t = setTimeout(function() { ctrl.abort(); }, 1500);
+        fetch('http://' + oldHost + ':' + port + '/api/wifi/status', { signal: ctrl.signal })
+          .then(function(r) { clearTimeout(t); return r.json(); })
+          .then(function() {
+            elapsed++;
+            btn.textContent = 'Switching... ' + elapsed + 's';
+            if (elapsed > 60) {
+              statusEl.className = 'wifi-status-box err';
+              statusEl.innerHTML = '<strong>Switch timeout</strong>Pi did not change network';
+              btn.textContent = 'Connect';
+              btn.disabled = false;
+              return;
+            }
+            setTimeout(heartbeat, 1000);
+          })
+          .catch(function() {
+            clearTimeout(t);
+            wifiStartScan(targetSSID, oldHost, port, btn, statusEl);
+          });
+      }
+      heartbeat();
+    }
+
+    function wifiStartScan(targetSSID, oldHost, port, btn, statusEl) {
+      var found = false;
+      var startTime = Date.now();
+      var MAX_TIME = 180000;
+      var pass = 0;
+
+      var prefixes = [];
+      var oldParts = oldHost.split('.');
+      if (oldParts.length === 4) {
+        prefixes.push(oldParts[0] + '.' + oldParts[1] + '.' + oldParts[2] + '.');
+      }
+      var common = ['192.168.31.', '192.168.0.', '192.168.1.', '192.168.2.', '192.168.50.', '10.0.0.'];
+      for (var c = 0; c < common.length; c++) {
+        if (prefixes.indexOf(common[c]) === -1) prefixes.push(common[c]);
+      }
+      var candidates = [];
+      for (var i = 1; i <= 254; i += 2) {
+        for (var p = 0; p < prefixes.length; p++) {
+          var ip = prefixes[p] + i;
+          if (ip !== oldHost) candidates.push(ip);
+        }
+      }
+      for (var i = 2; i <= 254; i += 2) {
+        for (var p = 0; p < prefixes.length; p++) {
+          var ip = prefixes[p] + i;
+          if (ip !== oldHost) candidates.push(ip);
+        }
+      }
+      var total = candidates.length;
+
+      btn.textContent = 'Scanning...';
+      statusEl.className = 'wifi-status-box';
+      statusEl.innerHTML = '<strong>Network changed!</strong>Scanning for PiWeb...';
+
+      function runPass() {
+        if (found) return;
+        if (Date.now() - startTime > MAX_TIME) {
+          statusEl.className = 'wifi-status-box err';
+          statusEl.innerHTML = '<strong>PiWeb not found</strong>' +
+            (pass + 1) + ' passes, ' + total + ' addresses each.<br>' +
+            'Make sure your device is on the same network.';
+          btn.textContent = 'Retry';
+          btn.disabled = false;
+          btn.onclick = function() {
+            btn.onclick = null;
+            btn.disabled = true;
+            startTime = Date.now();
+            pass = 0;
+            wifiStartScan(targetSSID, oldHost, port, btn, statusEl);
+          };
+          return;
+        }
+
+        pass++;
+        var idx = 0, active = 0, scanned = 0;
+        var CONCURRENCY = 30;
+        var TIMEOUT = 2000;
+
+        function launch() {
+          while (active < CONCURRENCY && idx < total && !found) {
+            (function(ip) {
+              active++;
+              var ctrl = new AbortController();
+              var t = setTimeout(function() { ctrl.abort(); }, TIMEOUT);
+              fetch('http://' + ip + ':' + port + '/api/wifi/status', { signal: ctrl.signal, mode: 'cors' })
+                .then(function(r) {
+                  clearTimeout(t);
+                  return r.json().then(function(d) {
+                    if (!found && d && (d.url || d.hostname)) {
+                      found = true;
+                      wifiRedirectTo(ip, port, d.ssid || targetSSID, btn, statusEl);
+                    }
+                  });
+                })
+                .catch(function() { clearTimeout(t); })
+                .finally(function() {
+                  active--;
+                  scanned++;
+                  if (!found) {
+                    if (scanned % 100 === 0) {
+                      var sec = Math.round((Date.now() - startTime) / 1000);
+                      statusEl.innerHTML = '<strong>Scanning (pass ' + pass + ')...</strong>' +
+                        scanned + '/' + total + ' | ' + sec + 's elapsed';
+                    }
+                    launch();
+                  }
+                });
+            })(candidates[idx++]);
+          }
+          if (active === 0 && !found) {
+            setTimeout(runPass, 2000);
+          }
+        }
+        launch();
+      }
+
+      runPass();
+    }
+
+    function wifiRedirectTo(ip, port, ssid, btn, statusEl) {
+      statusEl.className = 'wifi-status-box ok';
+      statusEl.innerHTML = '<strong>Found PiWeb!</strong>' + ssid +
+        '<div class="wifi-ip">IP: ' + ip + ':' + port + '</div>' +
+        '<div style="margin-top:4px">Redirecting...</div>';
+      btn.textContent = 'Redirecting...';
+      setTimeout(function() { window.location.href = 'http://' + ip + ':' + port; }, 1500);
     }
 
     function stopAllTimers() {
@@ -1942,7 +2318,7 @@
         newBtn: '新建', deleteLabel: '删除',
         connecting: '连接中...', connected: '已连接', disconnected: '已断开',
         sessionPrefix: '会话: ', noSession: '无会话',
-        thinking: '思考中', running: '运行中...', complete: '完成', stopped: '已停止',
+        thinking: '思考中', reflection: '回溯思考', running: '运行中...', complete: '完成', stopped: '已停止',
         placeholder: '发送消息...', copyTitle: '复制',
         uploadImage: '上传图片',
         imageTooLarge: '图片过大 (最大 5MB)',
@@ -1974,7 +2350,7 @@
         leaveEmpty: '留空自动检测',
         defaultMaxTokens: '默认: auto',
         customSysPrompt: '自定义系统提示词 (留空使用默认)',
-        funnyPiGroup: 'FunnyPi', localDeploy: '本地部署', domesticSvc: '国内服务',
+        localDeploy: '本地部署', domesticSvc: '国内服务',
         intlSvc: '国际服务', otherGroup: '其他',
         tools: ' 工具', gridLabel: 'Grid', stepLabel: '步骤',
         gridPlanning: '正在规划...', gridPlanTitle: '执行计划', gridStepOf: '步骤', gridSkillGap: '缺失技能', gridComplete: '已完成', gridFailed: '失败', gridExecuting: '执行中',
@@ -2000,7 +2376,7 @@
         newBtn: 'New', deleteLabel: 'Delete',
         connecting: 'Connecting...', connected: 'Connected', disconnected: 'Disconnected',
         sessionPrefix: 'Session: ', noSession: 'No session',
-        thinking: 'Thinking', running: 'Running...', complete: 'Complete', stopped: 'Stopped',
+        thinking: 'Thinking', reflection: 'Reflecting', running: 'Running...', complete: 'Complete', stopped: 'Stopped',
         placeholder: 'Send a message...', copyTitle: 'Copy',
         uploadImage: 'Upload image',
         imageTooLarge: 'Image too large (max 5MB)',
@@ -2032,7 +2408,7 @@
         leaveEmpty: 'Leave empty for auto-detect',
         defaultMaxTokens: 'Default: auto',
         customSysPrompt: 'Custom system prompt (leave empty for default)',
-        funnyPiGroup: 'FunnyPi', localDeploy: 'Local Deploy', domesticSvc: 'Chinese Services',
+        localDeploy: 'Local Deploy', domesticSvc: 'Chinese Services',
         intlSvc: 'International Services', otherGroup: 'Other',
         tools: ' tools', gridLabel: 'Grid', stepLabel: 'Step',
         gridPlanning: 'Planning...', gridPlanTitle: 'Execution Plan', gridStepOf: 'Step', gridSkillGap: 'Missing Skills', gridComplete: 'Complete', gridFailed: 'Failed', gridExecuting: 'Executing',
@@ -2222,6 +2598,7 @@
       if (thinkingEl) { thinkingEl.classList.add('collapsed', 'done'); }
       thinkingEl = null;
       thinkingText = '';
+      nextThinkingIsReflection = false;
       if (currentAssistantEl && !currentAssistantText.trim()) currentAssistantEl.remove();
       currentAssistantEl = null;
       currentAssistantContentEl = null;
@@ -2239,19 +2616,30 @@
     function handleWsMessage(msg) {
       // Ignore streaming events that arrive after the user pressed stop
       // (agent may still emit a few tokens before actually halting)
-      if (!sending && (msg.type === 'thinking' || msg.type === 'token' || msg.type === 'tool_start' || msg.type === 'tool_end')) {
+      if (!sending && (msg.type === 'thinking' || msg.type === 'token' || msg.type === 'tool_start' || msg.type === 'tool_end' || msg.type === 'reflection')) {
         return;
       }
 
       switch (msg.type) {
+        case 'reflection':
+          if (thinkingEl) {
+            thinkingEl.classList.add('collapsed', 'done');
+            thinkingEl = null;
+            thinkingText = '';
+          }
+          nextThinkingIsReflection = true;
+          break;
+
         case 'thinking':
           if (!thinkingEl) {
             thinkingEl = document.createElement('div');
-            thinkingEl.className = 'thinking-block';
+            thinkingEl.className = nextThinkingIsReflection ? 'thinking-block reflection' : 'thinking-block';
+            var thinkLabel = nextThinkingIsReflection ? t('reflection') : t('thinking');
+            nextThinkingIsReflection = false;
             thinkingEl.innerHTML =
               '<div class="thinking-header">' +
               '<div class="thinking-icon"></div>' +
-              '<span class="thinking-label">' + t('thinking') + '</span>' +
+              '<span class="thinking-label">' + thinkLabel + '</span>' +
               '<span class="thinking-chevron">\u25BC</span>' +
               '</div>' +
               '<div class="thinking-content"></div>';
@@ -2408,6 +2796,7 @@
             thinkingEl = null;
             thinkingText = '';
           }
+          nextThinkingIsReflection = false;
           if (currentAssistantEl && !currentAssistantText.trim()) {
             currentAssistantEl.remove();
           } else if (currentAssistantContentEl && currentAssistantText.trim()) {
@@ -2433,6 +2822,7 @@
             thinkingEl = null;
             thinkingText = '';
           }
+          nextThinkingIsReflection = false;
           if (msg.message) appendMessage('assistant', t('error') + msg.message);
           if (currentAssistantEl && !currentAssistantText.trim()) {
             currentAssistantEl.remove();
@@ -2716,7 +3106,6 @@
           // Another device sent a message on the same session — render it in real-time
           if (msg.sessionId === currentSessionId) {
             appendMessage(msg.role, msg.content);
-            // Render file cards if present
             if (msg.files && msg.files.length > 0) {
               var container = document.getElementById('chatContainer');
               for (var nfi = 0; nfi < msg.files.length; nfi++) {
@@ -3461,8 +3850,6 @@
 
     // ===== Provider Presets =====
     var PROVIDERS = [
-      { group: 'funnyPiGroup' },
-      { name: 'FunnyPi (智能调度)', value: 'funnypi', type: 'openai', baseURL: 'https://funnypi.com/proxy/v1', models: '' },
       { group: 'localDeploy' },
       { name: 'Local (Ollama)', value: 'ollama', type: 'openai', baseURL: 'http://localhost:11434/v1', models: 'llama3.3, qwen2.5, deepseek-r1', noKey: true },
       { name: 'Local (vLLM/SGLang)', value: 'vllm', type: 'openai', baseURL: 'http://localhost:8000/v1', models: 'auto-detect', noKey: true },
@@ -3540,26 +3927,6 @@
       var apiKeyField = document.getElementById('apiKeyField');
       var baseURLInput = document.getElementById('setBaseURL');
       var modelInput = document.getElementById('setModel');
-      var modelField = document.getElementById('modelField');
-      var maxTokensField = document.getElementById('maxTokensField');
-      var funnypiPlanSection = document.getElementById('funnypiPlanSection');
-      var isFunnyPi = preset.value === 'funnypi';
-
-      // FunnyPi mode: hide model/maxTokens, show plan A/B
-      if (isFunnyPi) {
-        baseURLField.style.display = 'none';
-        baseURLInput.value = preset.baseURL;
-        apiKeyField.style.display = '';
-        modelField.style.display = 'none';
-        maxTokensField.style.display = 'none';
-        funnypiPlanSection.style.display = '';
-        return;
-      }
-
-      // Non-FunnyPi: restore normal fields
-      modelField.style.display = '';
-      maxTokensField.style.display = '';
-      funnypiPlanSection.style.display = 'none';
 
       // Fill baseURL
       if (preset.value === 'custom') {
@@ -3587,72 +3954,6 @@
       } else {
         modelInput.placeholder = 'Leave empty for auto-detect';
       }
-    }
-
-    function selectFunnyPiPlan(mode) {
-      var radios = document.querySelectorAll('input[name="funnypiPlan"]');
-      for (var i = 0; i < radios.length; i++) {
-        radios[i].checked = (radios[i].value === mode);
-      }
-      // Visual highlight
-      document.getElementById('planCardA').style.borderColor = mode === 'performance' ? 'var(--accent)' : 'var(--border)';
-      document.getElementById('planCardB').style.borderColor = mode === 'budget' ? 'var(--accent)' : 'var(--border)';
-    }
-
-    // ===== Scheduler =====
-    var SCHEDULER_PRESETS = {
-      performance: { init: 'claude-sonnet-4-6', work: 'qwen3.5-397b-a17b', reflect: 'claude-opus-4-6', compress: 'qwen3.5-397b-a17b' },
-      budget: { init: 'claude-sonnet-4-6', work: 'minimax-m2.5', reflect: 'glm-5', compress: 'minimax-m2.5' }
-    };
-
-    function onSchedulerModeChange() {
-      // No-op: scheduler UI is hidden, controlled via FunnyPi Plan A/B or config file
-    }
-
-    function loadSchedulerUI(config) {
-      var sch = config.scheduler;
-      var mode = (sch && sch.mode) ? sch.mode : 'none';
-      document.getElementById('setSchedulerMode').value = mode;
-
-      // Fill custom inputs if available
-      if (sch && sch.models) {
-        document.getElementById('schInitInput').value = sch.models.init || '';
-        document.getElementById('schWorkInput').value = sch.models.work || '';
-        document.getElementById('schReflectInput').value = sch.models.reflect || '';
-        document.getElementById('schCompressInput').value = sch.models.compress || '';
-      } else {
-        document.getElementById('schInitInput').value = '';
-        document.getElementById('schWorkInput').value = '';
-        document.getElementById('schReflectInput').value = '';
-        document.getElementById('schCompressInput').value = '';
-      }
-
-      // FunnyPi plan A/B — sync radio from scheduler mode
-      if (mode === 'performance' || mode === 'budget') {
-        selectFunnyPiPlan(mode);
-      } else {
-        selectFunnyPiPlan('performance'); // default to A
-      }
-
-      onSchedulerModeChange();
-    }
-
-    function buildSchedulerConfig() {
-      var mode = document.getElementById('setSchedulerMode').value;
-      if (mode === 'none') return { mode: 'none' };
-      if (mode === 'custom') {
-        return {
-          mode: 'custom',
-          models: {
-            init: document.getElementById('schInitInput').value.trim() || 'claude-sonnet-4-6',
-            work: document.getElementById('schWorkInput').value.trim() || 'qwen3.5-397b-a17b',
-            reflect: document.getElementById('schReflectInput').value.trim() || 'claude-opus-4-6',
-            compress: document.getElementById('schCompressInput').value.trim() || 'qwen3.5-397b-a17b'
-          }
-        };
-      }
-      // performance or budget — just the mode, server uses its presets
-      return { mode: mode };
     }
 
     function toggleKeyVisibility() {
@@ -3694,9 +3995,6 @@
           statusEl.textContent = t('noKeyConfigured');
           statusEl.style.color = 'var(--yellow)';
         }
-
-        // Scheduler
-        loadSchedulerUI(config);
 
         // MCP JSON editor
         try {
@@ -3893,15 +4191,6 @@
         return;
       }
 
-      // Scheduler config — FunnyPi uses plan A/B radio, others use normal scheduler
-      if (presetValue === 'funnypi') {
-        var selectedPlan = document.querySelector('input[name="funnypiPlan"]:checked');
-        config.scheduler = { mode: selectedPlan ? selectedPlan.value : 'performance' };
-        config.maxTokens = 8192; // sensible default for FunnyPi
-      } else {
-        config.scheduler = buildSchedulerConfig();
-      }
-
       // Save API key first if changed
       var apiKeyInput = document.getElementById('setApiKey').value.trim();
       var saveKeyPromise = Promise.resolve();
@@ -3959,19 +4248,14 @@
 
     function addFile(file) {
       if (!file) return;
-      // Size check
       if (file.size > 20 * 1024 * 1024) { showToast(t('fileTooLarge'), true); return; }
-      // Block dangerous types
       var ext = (file.name.split('.').pop() || '').toLowerCase();
       var blocked = ['exe','bat','cmd','sh','ps1','dll','sys','msi','com','scr','vbs','wsf'];
       if (blocked.indexOf(ext) >= 0) { showToast(t('fileBlocked'), true); return; }
-
-      // Route: images < 5MB go through existing base64 WebSocket path
-      if (file.type.startsWith('image/') && file.size < 5 * 1024 * 1024) {
+      if (file.type.startsWith('image/')) {
         addImageFile(file);
         return;
       }
-      // Everything else: HTTP upload
       uploadFileHTTP(file);
     }
 
@@ -3993,7 +4277,7 @@
           canvas.height = h;
           var ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, w, h);
-          var compressed = canvas.toDataURL('image/jpeg', 0.75);
+          var compressed = canvas.toDataURL('image/jpeg', 0.92);
           pendingImages.push(compressed);
           renderAttachmentPreviews();
         };
@@ -4009,7 +4293,6 @@
       var entry = { id: id, name: file.name, mime: file.type || 'application/octet-stream', size: file.size, path: '', status: 'uploading', progress: 0, xhr: null };
       pendingFiles.push(entry);
       renderAttachmentPreviews();
-
       var xhr = new XMLHttpRequest();
       entry.xhr = xhr;
       xhr.open('POST', '/api/upload?name=' + encodeURIComponent(file.name));
@@ -4085,14 +4368,12 @@
     function renderAttachmentPreviews() {
       var bar = document.getElementById('imagePreviewBar');
       var html = '';
-      // Image previews
       for (var i = 0; i < pendingImages.length; i++) {
         html += '<div class="img-preview">' +
           '<img src="' + pendingImages[i] + '">' +
           '<button class="img-preview-remove" onclick="removeImage(' + i + ')">\u00D7</button>' +
         '</div>';
       }
-      // File previews
       for (var j = 0; j < pendingFiles.length; j++) {
         var f = pendingFiles[j];
         var statusClass = f.status === 'error' ? ' error' : (f.status === 'done' ? ' done' : '');
@@ -4125,10 +4406,8 @@
 
     function sendMessage() {
       if (sending) return;
-      // Block if files are still uploading
       var uploading = pendingFiles.filter(function(f) { return f.status === 'uploading'; });
       if (uploading.length > 0) { showToast(t('filesStillUploading'), true); return; }
-      // Remove errored files
       pendingFiles = pendingFiles.filter(function(f) { return f.status === 'done'; });
 
       var input = document.getElementById('msgInput');
@@ -4145,7 +4424,6 @@
         return;
       }
 
-      // Show user message with image thumbnails and file cards
       var container = document.getElementById('chatContainer');
       if (hasAttachments || content) {
         var div = document.createElement('div');
