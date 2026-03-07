@@ -398,6 +398,13 @@
     }
     .thinking-block.collapsed .thinking-content { display: none; }
 
+    /* Reflection (backtrack thinking) */
+    .thinking-block.reflection { border-color: #a78bfa; }
+    .thinking-block.reflection .thinking-icon { border-color: #a78bfa; border-top-color: transparent; }
+    .thinking-block.reflection .thinking-label { color: #a78bfa; }
+    .thinking-block.reflection.done .thinking-icon { border-color: var(--text3); border-top-color: var(--text3); }
+    .thinking-block.reflection.done .thinking-label { color: var(--text3); }
+
     /* Tool Cards */
     .tool-card {
       margin: 8px 0;
@@ -1479,6 +1486,42 @@
       .copy-btn { opacity: 0; }
       .message.assistant:hover .copy-btn { opacity: 1; }
     }
+    /* WiFi Panel */
+    .wifi-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;opacity:0;transition:opacity .2s}
+    .wifi-overlay.show{opacity:1}
+    .wifi-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:340px;max-height:80vh;overflow-y:auto;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transition:all .2s}
+    .wifi-modal.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    .wifi-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .wifi-header h3{margin:0;font-size:17px;font-weight:600;color:var(--text)}
+    .wifi-close{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1}
+    .wifi-close:hover{color:var(--text)}
+    .wifi-status-box{padding:12px;border-radius:var(--radius-sm);background:var(--surface2);margin-bottom:16px;font-size:13px;color:var(--text2);border-left:3px solid var(--text3)}
+    .wifi-status-box.ok{border-left-color:var(--green)}
+    .wifi-status-box.err{border-left-color:var(--red)}
+    .wifi-status-box.ap{border-left-color:var(--yellow)}
+    .wifi-status-box strong{color:var(--text);display:block;margin-bottom:2px}
+    .wifi-status-box .wifi-ip{font-size:11px;opacity:0.7;margin-top:4px}
+    .wifi-scan-btn{width:100%;padding:8px;border:1px dashed var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;margin-bottom:12px;transition:all .2s}
+    .wifi-scan-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .wifi-list{margin-bottom:12px}
+    .wifi-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:background .15s;margin-bottom:2px}
+    .wifi-item:hover{background:var(--surface2)}
+    .wifi-item.active{background:rgba(16,185,129,0.1)}
+    .wifi-item .wifi-ssid{font-size:14px;font-weight:500;color:var(--text)}
+    .wifi-item .wifi-meta{font-size:11px;color:var(--text3);margin-top:2px}
+    .wifi-item .wifi-bars{display:flex;gap:2px;align-items:flex-end}
+    .wifi-item .wifi-bars span{width:3px;border-radius:1px;background:var(--border)}
+    .wifi-item .wifi-bars span.on{background:var(--accent)}
+    .wifi-connect-box{margin-top:8px;padding:12px;background:var(--surface2);border-radius:var(--radius-sm)}
+    .wifi-connect-box .wifi-target{font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px}
+    .wifi-connect-box input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:14px;box-sizing:border-box}
+    .wifi-connect-box input:focus{outline:none;border-color:var(--accent)}
+    .wifi-connect-btn{width:100%;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;transition:opacity .2s}
+    .wifi-connect-btn:hover{opacity:0.9}
+    .wifi-connect-btn:disabled{opacity:0.4;cursor:not-allowed}
+    .wifi-empty{padding:20px;text-align:center;color:var(--text3);font-size:13px}
+    #wifiBtn .wifi-indicator{width:6px;height:6px;border-radius:50%;position:absolute;top:4px;right:4px}
+    #wifiBtn{position:relative}
   </style>
   <script>
     (function(){
@@ -1646,12 +1689,34 @@
   </div>
   <div class="toast" id="toast"></div>
 
+  <!-- WiFi Panel -->
+  <div id="wifiPanel" style="display:none">
+    <div class="wifi-overlay" onclick="closeWiFi()"></div>
+    <div class="wifi-modal">
+      <div class="wifi-header">
+        <h3 id="wifiTitle">Network</h3>
+        <button class="wifi-close" onclick="closeWiFi()">&times;</button>
+      </div>
+      <div id="wifiStatus" class="wifi-status-box">Loading...</div>
+      <button class="wifi-scan-btn" onclick="wifiScan()">Scan Networks</button>
+      <div id="wifiList" class="wifi-list"></div>
+      <div id="wifiConnect" class="wifi-connect-box" style="display:none">
+        <div class="wifi-target" id="wifiTarget"></div>
+        <input type="password" id="wifiPwd" placeholder="WiFi Password" autocomplete="off">
+        <button class="wifi-connect-btn" id="wifiGoBtn" onclick="wifiDoConnect()">Connect</button>
+      </div>
+    </div>
+  </div>
+
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span class="sidebar-logo">
         <svg width="28" height="28" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="url(#piweb-bg)"/><text x="256" y="340" font-family="'Arial Black',sans-serif" font-size="320" font-weight="900" fill="url(#piweb-txt)" text-anchor="middle">Pi</text></svg>
         <span class="sidebar-logo-text">PIweb</span>
       </span>
+      <button class="icon-btn" id="wifiBtn" onclick="openWiFi()" title="WiFi" style="position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
+      </button>
       <button class="icon-btn" onclick="openSettings()" title="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l-.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
@@ -1677,6 +1742,9 @@
         <span class="sidebar-logo-text">PIweb</span>
       </span>
       <span style="flex:1"></span>
+      <button class="icon-btn" id="wifiBtnMobile" onclick="openWiFi()" title="WiFi" style="min-width:32px;min-height:32px;padding:4px;position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
+      </button>
       <button class="icon-btn" onclick="openTimerDialog()" title="Timer" style="min-width:32px;min-height:32px;padding:4px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3l2 2"/><path d="M19 3l-2 2"/><path d="M12 5V3"/></svg>
       </button>
@@ -1710,7 +1778,7 @@
     </div>
   </div>
   <div class="drop-overlay" id="dropOverlay" style="display:none">
-    <div class="drop-overlay-icon">&#x1F4CE;</div>
+    <div class="drop-overlay-icon">+</div>
     <div class="drop-overlay-text" id="dropOverlayText">Drop files here</div>
   </div>
 
@@ -1724,6 +1792,7 @@
     var currentAssistantText = '';
     var thinkingEl = null;
     var thinkingText = '';
+    var nextThinkingIsReflection = false;
     var skills = [];
     var activeSkills = (function() {
       try {
@@ -1942,7 +2011,7 @@
         newBtn: '新建', deleteLabel: '删除',
         connecting: '连接中...', connected: '已连接', disconnected: '已断开',
         sessionPrefix: '会话: ', noSession: '无会话',
-        thinking: '思考中', running: '运行中...', complete: '完成', stopped: '已停止',
+        thinking: '思考中', reflection: '回溯思考', running: '运行中...', complete: '完成', stopped: '已停止',
         placeholder: '发送消息...', copyTitle: '复制',
         uploadImage: '上传图片',
         imageTooLarge: '图片过大 (最大 5MB)',
@@ -2000,7 +2069,7 @@
         newBtn: 'New', deleteLabel: 'Delete',
         connecting: 'Connecting...', connected: 'Connected', disconnected: 'Disconnected',
         sessionPrefix: 'Session: ', noSession: 'No session',
-        thinking: 'Thinking', running: 'Running...', complete: 'Complete', stopped: 'Stopped',
+        thinking: 'Thinking', reflection: 'Reflecting', running: 'Running...', complete: 'Complete', stopped: 'Stopped',
         placeholder: 'Send a message...', copyTitle: 'Copy',
         uploadImage: 'Upload image',
         imageTooLarge: 'Image too large (max 5MB)',
@@ -2233,25 +2302,39 @@
         if (st) st.textContent = t('stopped');
       });
       activeToolCards = {};
+      nextThinkingIsReflection = false;
       setSending(false);
     }
 
     function handleWsMessage(msg) {
       // Ignore streaming events that arrive after the user pressed stop
       // (agent may still emit a few tokens before actually halting)
-      if (!sending && (msg.type === 'thinking' || msg.type === 'token' || msg.type === 'tool_start' || msg.type === 'tool_end')) {
+      if (!sending && (msg.type === 'thinking' || msg.type === 'token' || msg.type === 'tool_start' || msg.type === 'tool_end' || msg.type === 'reflection')) {
         return;
       }
 
       switch (msg.type) {
+        case 'reflection':
+          // Close current thinking block if open
+          if (thinkingEl) {
+            thinkingEl.classList.add('collapsed', 'done');
+            thinkingEl = null;
+            thinkingText = '';
+          }
+          // Flag: the next thinking block should be styled as reflection
+          nextThinkingIsReflection = true;
+          break;
+
         case 'thinking':
           if (!thinkingEl) {
             thinkingEl = document.createElement('div');
-            thinkingEl.className = 'thinking-block';
+            thinkingEl.className = nextThinkingIsReflection ? 'thinking-block reflection' : 'thinking-block';
+            var thinkLabel = nextThinkingIsReflection ? t('reflection') : t('thinking');
+            nextThinkingIsReflection = false;
             thinkingEl.innerHTML =
               '<div class="thinking-header">' +
               '<div class="thinking-icon"></div>' +
-              '<span class="thinking-label">' + t('thinking') + '</span>' +
+              '<span class="thinking-label">' + thinkLabel + '</span>' +
               '<span class="thinking-chevron">\u25BC</span>' +
               '</div>' +
               '<div class="thinking-content"></div>';
@@ -2423,6 +2506,7 @@
             if (st) st.textContent = t('complete');
           });
           activeToolCards = {};
+          nextThinkingIsReflection = false;
           setSending(false);
           // Session list will be updated by ws.onopen on reconnect
           break;
@@ -2444,6 +2528,7 @@
             c.className = 'tool-card done';
           });
           activeToolCards = {};
+          nextThinkingIsReflection = false;
           setSending(false);
           break;
 
@@ -3966,36 +4051,58 @@
       var blocked = ['exe','bat','cmd','sh','ps1','dll','sys','msi','com','scr','vbs','wsf'];
       if (blocked.indexOf(ext) >= 0) { showToast(t('fileBlocked'), true); return; }
 
-      // Route: images < 5MB go through existing base64 WebSocket path
-      if (file.type.startsWith('image/') && file.size < 5 * 1024 * 1024) {
+      // ALL images go through compression (no size threshold — phone photos often > 5MB)
+      if (file.type.startsWith('image/')) {
         addImageFile(file);
         return;
       }
-      // Everything else: HTTP upload
+      // Non-images: HTTP upload
       uploadFileHTTP(file);
     }
 
     function addImageFile(file) {
       if (!file || !file.type.startsWith('image/')) return;
       if (file.size > 20 * 1024 * 1024) { showToast(t('fileTooLarge'), true); return; }
+      // Prefer createImageBitmap — decodes file directly without base64 intermediate,
+      // much better memory efficiency on mobile (avoids FileReader + 33% base64 bloat)
+      if (typeof createImageBitmap === 'function') {
+        createImageBitmap(file).then(function(bitmap) {
+          _compressToJpeg(bitmap, bitmap.width, bitmap.height, true);
+        }).catch(function() {
+          // Fallback to FileReader for unsupported formats
+          _compressViaFileReader(file);
+        });
+      } else {
+        // Fallback for older browsers without createImageBitmap
+        _compressViaFileReader(file);
+      }
+    }
+
+    function _compressToJpeg(source, origW, origH, closeable) {
+      var maxDim = 1024;
+      var w = origW, h = origH;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(source, 0, 0, w, h);
+      if (closeable && source.close) source.close(); // Free ImageBitmap memory immediately
+      var compressed = canvas.toDataURL('image/jpeg', 0.75);
+      canvas.width = 1; canvas.height = 1; // Free canvas memory
+      pendingImages.push(compressed);
+      renderAttachmentPreviews();
+    }
+
+    function _compressViaFileReader(file) {
       var reader = new FileReader();
       reader.onload = function(e) {
         var img = new Image();
         img.onload = function() {
-          var maxDim = 1024;
-          var w = img.width, h = img.height;
-          if (w > maxDim || h > maxDim) {
-            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-            else { w = Math.round(w * maxDim / h); h = maxDim; }
-          }
-          var canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          var compressed = canvas.toDataURL('image/jpeg', 0.75);
-          pendingImages.push(compressed);
-          renderAttachmentPreviews();
+          _compressToJpeg(img, img.width, img.height, false);
         };
         img.onerror = function() { showToast(t('readImageFail'), true); };
         img.src = e.target.result;
@@ -4562,6 +4669,338 @@
       window.visualViewport.addEventListener('resize', function() {
         document.body.style.height = window.visualViewport.height + 'px';
       });
+    }
+
+    // ===== WiFi =====
+    var _wifiSSID = null;
+
+    function openWiFi() {
+      var panel = document.getElementById('wifiPanel');
+      panel.style.display = 'block';
+      document.getElementById('wifiTitle').textContent = currentLang === 'zh' ? '网络设置' : 'Network';
+      // Animate in
+      requestAnimationFrame(function() {
+        panel.querySelector('.wifi-overlay').classList.add('show');
+        panel.querySelector('.wifi-modal').classList.add('show');
+      });
+      wifiRefreshStatus();
+      wifiScan();
+    }
+
+    function closeWiFi() {
+      var panel = document.getElementById('wifiPanel');
+      panel.querySelector('.wifi-overlay').classList.remove('show');
+      panel.querySelector('.wifi-modal').classList.remove('show');
+      setTimeout(function() { panel.style.display = 'none'; }, 200);
+      _wifiSSID = null;
+      _wifiAutoScanning = false; // reset so auto-scan works next time
+      document.getElementById('wifiConnect').style.display = 'none';
+    }
+
+    var _wifiAutoScanning = false;
+
+    function wifiRefreshStatus() {
+      var el = document.getElementById('wifiStatus');
+      el.className = 'wifi-status-box';
+      el.innerHTML = currentLang === 'zh' ? '检测中...' : 'Checking...';
+      fetch('/api/wifi/status').then(function(r) { return r.json(); }).then(function(d) {
+        if (d.hotspot) {
+          el.className = 'wifi-status-box ap';
+          el.innerHTML = '<strong>' + (currentLang === 'zh' ? '热点模式' : 'Hotspot Mode') + '</strong>' +
+            'PiWeb-Setup' +
+            '<div class="wifi-ip">IP: 10.42.0.1</div>';
+        } else if (d.connected) {
+          el.className = 'wifi-status-box ok';
+          el.innerHTML = '<strong>' + (currentLang === 'zh' ? '已连接' : 'Connected') + '</strong>' +
+            (d.ssid || 'Unknown') +
+            '<div class="wifi-ip">IP: ' + (d.ip || '?') + ':3000</div>';
+        } else {
+          el.className = 'wifi-status-box err';
+          el.innerHTML = '<strong>' + (currentLang === 'zh' ? '未连接' : 'Disconnected') + '</strong>' +
+            (currentLang === 'zh' ? '请选择一个 WiFi 网络' : 'Select a WiFi network');
+        }
+      }).catch(function() {
+        // Server unreachable — PiWeb moved, auto-scan to find it
+        el.className = 'wifi-status-box';
+        el.innerHTML = '<strong>Server unreachable</strong>Scanning for PiWeb on network...';
+        if (!_wifiAutoScanning) {
+          _wifiAutoScanning = true;
+          var btn = document.getElementById('wifiGoBtn');
+          btn.disabled = true;
+          btn.textContent = 'Scanning...';
+          wifiStartScan('', location.hostname, location.port || '3000', btn, el);
+        }
+      });
+    }
+
+    function wifiScan() {
+      var el = document.getElementById('wifiList');
+      el.innerHTML = '<div class="wifi-empty">' + (currentLang === 'zh' ? '扫描中...' : 'Scanning...') + '</div>';
+      document.getElementById('wifiConnect').style.display = 'none';
+      _wifiSSID = null;
+
+      fetch('/api/wifi/scan').then(function(r) { return r.json(); }).then(function(d) {
+        if (!d.networks || !d.networks.length) {
+          el.innerHTML = '<div class="wifi-empty">' + (currentLang === 'zh' ? '未发现 WiFi' : 'No networks found') + '</div>';
+          return;
+        }
+        el.innerHTML = d.networks.map(function(n) {
+          var bars = [20, 40, 60, 80].map(function(t, i) {
+            return '<span style="height:' + (5 + i * 3) + 'px" class="' + (n.signal >= t ? 'on' : '') + '"></span>';
+          }).join('');
+          return '<div class="wifi-item' + (n.connected ? ' active' : '') + '" onclick="wifiSelect(\'' + n.ssid.replace(/'/g, "\\'").replace(/\\/g, "\\\\") + '\')">' +
+            '<div><div class="wifi-ssid">' + n.ssid + (n.connected ? ' &#10003;' : '') + '</div>' +
+            '<div class="wifi-meta">' + (n.security || 'Open') + ' · ' + n.signal + '%</div></div>' +
+            '<div class="wifi-bars">' + bars + '</div></div>';
+        }).join('');
+      }).catch(function() {
+        el.innerHTML = '<div class="wifi-empty">Server unreachable — scanning for PiWeb...</div>';
+      });
+    }
+
+    function wifiSelect(ssid) {
+      _wifiSSID = ssid;
+      var box = document.getElementById('wifiConnect');
+      box.style.display = 'block';
+      document.getElementById('wifiTarget').textContent = ssid;
+      var inp = document.getElementById('wifiPwd');
+      inp.value = '';
+      inp.focus();
+      // Enter key to connect
+      inp.onkeydown = function(e) { if (e.key === 'Enter') wifiDoConnect(); };
+      var btn = document.getElementById('wifiGoBtn');
+      btn.textContent = currentLang === 'zh' ? '连接' : 'Connect';
+      btn.disabled = false;
+      btn.style.background = '';
+    }
+
+    function wifiDoConnect() {
+      if (!_wifiSSID) return;
+      var pwd = document.getElementById('wifiPwd').value;
+      var btn = document.getElementById('wifiGoBtn');
+      var statusEl = document.getElementById('wifiStatus');
+      btn.disabled = true;
+      btn.textContent = 'Switching...';
+      var targetSSID = _wifiSSID;
+      var oldHost = location.hostname;
+      var port = location.port || '3000';
+
+      fetch('/api/wifi/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ssid: targetSSID, password: pwd })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.accepted) {
+          wifiWaitForDrop(targetSSID, oldHost, port, btn, statusEl);
+        } else if (d.error) {
+          btn.textContent = 'Failed';
+          btn.style.background = 'var(--red)';
+          statusEl.className = 'wifi-status-box err';
+          statusEl.innerHTML = '<strong>Error</strong>' + d.error;
+          setTimeout(function() {
+            btn.textContent = currentLang === 'zh' ? '连接' : 'Connect';
+            btn.style.background = '';
+            btn.disabled = false;
+          }, 3000);
+        }
+      }).catch(function() {
+        // Request itself failed — network already changing
+        wifiStartScan(targetSSID, oldHost, port, btn, statusEl);
+      });
+    }
+
+    // Phase 1: heartbeat old IP + poll switch-result — detect outcome fast
+    function wifiWaitForDrop(targetSSID, oldHost, port, btn, statusEl) {
+      var elapsed = 0;
+      var resolved = false;
+      statusEl.className = 'wifi-status-box';
+      statusEl.innerHTML = '<strong>Switching to ' + targetSSID + '...</strong>' +
+        'Waiting for network change';
+
+      function checkSwitchResult() {
+        if (resolved) return;
+        var ctrl2 = new AbortController();
+        var t2 = setTimeout(function() { ctrl2.abort(); }, 2000);
+        fetch('http://' + oldHost + ':' + port + '/api/wifi/switch-result', { signal: ctrl2.signal })
+          .then(function(r) { clearTimeout(t2); return r.json(); })
+          .then(function(result) {
+            if (resolved) return;
+            if (result.status === 'connected' && result.ip) {
+              // Relay says connected at new IP — redirect directly (skip scan!)
+              resolved = true;
+              wifiRedirectTo(result.ip, port, targetSSID, btn, statusEl);
+            } else if (result.status === 'rolled_back') {
+              // Switch failed, rolled back to previous network
+              resolved = true;
+              statusEl.className = 'wifi-status-box err';
+              statusEl.innerHTML = '<strong>Switch failed</strong>' +
+                (result.error || 'Rolled back to previous network');
+              btn.textContent = 'Connect';
+              btn.style.background = '';
+              btn.disabled = false;
+            } else if (result.status === 'failed') {
+              // Switch failed completely
+              resolved = true;
+              statusEl.className = 'wifi-status-box err';
+              statusEl.innerHTML = '<strong>Switch failed</strong>' +
+                (result.error || 'Could not connect');
+              btn.textContent = 'Connect';
+              btn.style.background = '';
+              btn.disabled = false;
+            }
+            // status 'switching' or 'pending' or 'none' — keep waiting
+          })
+          .catch(function() { clearTimeout(t2); });
+      }
+
+      function heartbeat() {
+        if (resolved) return;
+        // Poll switch-result in parallel with heartbeat
+        checkSwitchResult();
+
+        var ctrl = new AbortController();
+        var t = setTimeout(function() { ctrl.abort(); }, 1500);
+        fetch('http://' + oldHost + ':' + port + '/api/wifi/status', { signal: ctrl.signal })
+          .then(function(r) {
+            clearTimeout(t);
+            return r.json();
+          })
+          .then(function() {
+            if (resolved) return;
+            // Still alive — keep waiting
+            elapsed++;
+            btn.textContent = 'Switching... ' + elapsed + 's';
+            if (elapsed > 60) {
+              // Timeout: switch never happened
+              statusEl.className = 'wifi-status-box err';
+              statusEl.innerHTML = '<strong>Switch timeout</strong>Pi did not change network';
+              btn.textContent = 'Connect';
+              btn.disabled = false;
+              return;
+            }
+            setTimeout(heartbeat, 1000);
+          })
+          .catch(function() {
+            if (resolved) return;
+            // Connection dropped — network change detected!
+            clearTimeout(t);
+            wifiStartScan(targetSSID, oldHost, port, btn, statusEl);
+          });
+      }
+      heartbeat();
+    }
+
+    // Phase 2: continuous scan — stride pattern, repeating passes
+    function wifiStartScan(targetSSID, oldHost, port, btn, statusEl) {
+      var found = false;
+      var startTime = Date.now();
+      var MAX_TIME = 180000; // 3 min max
+      var pass = 0;
+
+      // Build candidates: interleaved subnets, stride 1,3,5..2,4,6
+      var prefixes = [];
+      var oldParts = oldHost.split('.');
+      if (oldParts.length === 4) {
+        prefixes.push(oldParts[0] + '.' + oldParts[1] + '.' + oldParts[2] + '.');
+      }
+      var common = ['192.168.31.', '192.168.0.', '192.168.1.', '192.168.2.', '192.168.50.', '10.0.0.'];
+      for (var c = 0; c < common.length; c++) {
+        if (prefixes.indexOf(common[c]) === -1) prefixes.push(common[c]);
+      }
+      // Stride: odd IPs first (1,3,5,...253), then even (2,4,6,...254)
+      // Interleaved across all subnets
+      var candidates = [];
+      for (var i = 1; i <= 254; i += 2) {
+        for (var p = 0; p < prefixes.length; p++) {
+          var ip = prefixes[p] + i;
+          if (ip !== oldHost) candidates.push(ip);
+        }
+      }
+      for (var i = 2; i <= 254; i += 2) {
+        for (var p = 0; p < prefixes.length; p++) {
+          var ip = prefixes[p] + i;
+          if (ip !== oldHost) candidates.push(ip);
+        }
+      }
+      var total = candidates.length;
+
+      btn.textContent = 'Scanning...';
+      statusEl.className = 'wifi-status-box';
+      statusEl.innerHTML = '<strong>Network changed!</strong>Scanning for PiWeb...';
+
+      function runPass() {
+        if (found) return;
+        if (Date.now() - startTime > MAX_TIME) {
+          statusEl.className = 'wifi-status-box err';
+          statusEl.innerHTML = '<strong>PiWeb not found</strong>' +
+            (pass + 1) + ' passes, ' + total + ' addresses each.<br>' +
+            'Make sure your device is on the same network.';
+          btn.textContent = 'Retry';
+          btn.disabled = false;
+          btn.onclick = function() {
+            btn.onclick = null;
+            btn.disabled = true;
+            startTime = Date.now();
+            pass = 0;
+            wifiStartScan(targetSSID, oldHost, port, btn, statusEl);
+          };
+          return;
+        }
+
+        pass++;
+        var idx = 0, active = 0, scanned = 0;
+        var CONCURRENCY = 30;
+        var TIMEOUT = 2000;
+
+        function launch() {
+          while (active < CONCURRENCY && idx < total && !found) {
+            (function(ip) {
+              active++;
+              var ctrl = new AbortController();
+              var t = setTimeout(function() { ctrl.abort(); }, TIMEOUT);
+              fetch('http://' + ip + ':' + port + '/api/wifi/status', { signal: ctrl.signal, mode: 'cors' })
+                .then(function(r) {
+                  clearTimeout(t);
+                  return r.json().then(function(d) {
+                    if (!found && d && (d.url || d.hostname)) {
+                      found = true;
+                      wifiRedirectTo(ip, port, d.ssid || targetSSID, btn, statusEl);
+                    }
+                  });
+                })
+                .catch(function() { clearTimeout(t); })
+                .finally(function() {
+                  active--;
+                  scanned++;
+                  if (!found) {
+                    if (scanned % 100 === 0) {
+                      var sec = Math.round((Date.now() - startTime) / 1000);
+                      statusEl.innerHTML = '<strong>Scanning (pass ' + pass + ')...</strong>' +
+                        scanned + '/' + total + ' | ' + sec + 's elapsed';
+                    }
+                    launch();
+                  }
+                });
+            })(candidates[idx++]);
+          }
+          // Pass done — start next pass immediately
+          if (active === 0 && !found) {
+            setTimeout(runPass, 2000);
+          }
+        }
+        launch();
+      }
+
+      runPass();
+    }
+
+    function wifiRedirectTo(ip, port, ssid, btn, statusEl) {
+      statusEl.className = 'wifi-status-box ok';
+      statusEl.innerHTML = '<strong>Found PiWeb!</strong>' + ssid +
+        '<div class="wifi-ip">IP: ' + ip + ':' + port + '</div>' +
+        '<div style="margin-top:4px">Redirecting...</div>';
+      btn.textContent = 'Redirecting...';
+      setTimeout(function() { window.location.href = 'http://' + ip + ':' + port; }, 1500);
     }
 
     // ===== Init =====
