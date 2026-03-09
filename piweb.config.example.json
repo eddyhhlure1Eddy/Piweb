@@ -46,5 +46,17 @@
   "baseURL": "https://api.deepseek.com/v1",
   "model": "deepseek-chat",
   "maxTokens": 8192,
-  "mcp": {}
+  "mcp": {},
+
+  "_example_reflect_endpoint": {
+    "scheduler": {
+      "reflectEndpoint": {
+        "enabled": true,
+        "provider": "openai",
+        "baseURL": "https://your-reflect-provider.com/v1",
+        "apiKey": "your-reflect-api-key",
+        "model": "strong-model-name"
+      }
+    }
+  }
 }

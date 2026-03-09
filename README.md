@@ -2,7 +2,7 @@
 
 > A smart, autonomous AI companion that lives on your device. Not just a chatbot — it plans, remembers, and acts on its own.
 
-![Version](https://img.shields.io/badge/version-2.0.5-green)
+![Version](https://img.shields.io/badge/version-2.0.6-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-green)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20(RPi)-lightgrey)
@@ -27,7 +27,7 @@ Unlike cloud-only chatbots, PIweb runs **locally on your hardware**, giving you 
 
 ## Release Notice
 
-> **Current version: v2.0.5**
+> **Current version: v2.0.6**
 
 - **Partial open source** — Core agent logic is obfuscated; skills, configs, docs, and frontend are open. Full open-source release planned for a future version.
 - **No token authentication** — The web server currently has no auth layer. This is intentional for LAN-only usage on Raspberry Pi. **Do not expose to the public internet without adding your own auth.**
@@ -364,7 +364,11 @@ Full open-source release with a proper license is planned for a future version. 
 
 ## Changelog
 
-### v2.0.5 (Current)
+### v2.0.6 (Current)
+
+- **Independent Reflect Endpoint** — Configure a separate, more powerful model dedicated to reflection and error correction. Let a strong model guide a smaller work model — dramatically improving execution accuracy on complex tasks without changing your primary provider setup.
+
+### v2.0.5
 
 - **Smart Hybrid Scheduling** — Intelligent model routing that automatically optimizes each stage of a conversation, improving execution accuracy while significantly reducing cost
 - **FunnyPi API integration** — One-click configuration for Claude model family (Sonnet / Opus / Haiku), with built-in Performance and Budget scheduling plans

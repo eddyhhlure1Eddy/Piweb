@@ -1226,6 +1226,23 @@
       min-width: 44px; min-height: 44px;
     }
     .hamburger:hover, .hamburger:active { background: var(--surface2); }
+    /* PIweb service button states */
+    #piwebServiceBtn { position: relative; }
+    #piwebServiceBtn.svc-running { color: var(--green); border-color: var(--green); }
+    #piwebServiceBtn.svc-stopped { color: var(--red); border-color: var(--red); }
+    #piwebServiceBtn.svc-loading { color: var(--yellow); border-color: var(--yellow); pointer-events: none; }
+    #piwebServiceBtn.svc-loading svg { animation: spin 0.8s linear infinite; }
+    #piwebServiceBtn::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+    }
+    #piwebServiceBtn.svc-running::after { background: var(--green); }
+    #piwebServiceBtn.svc-stopped::after { background: var(--red); }
+    #piwebServiceBtn.svc-loading::after { background: var(--yellow); }
     /* Timer bar — floating top-right in main area */
     .timer-bar {
       display: none;
@@ -1609,7 +1626,7 @@
         </div>
         <div class="settings-field" id="baseURLField">
           <label>Base URL</label>
-          <input id="setBaseURL" type="text" placeholder="e.g. http://192.168.31.11:8000/v1">
+          <input id="setBaseURL" type="text" placeholder="e.g. http://192.168.1.100:8000/v1">
         </div>
         <div class="settings-field" id="apiKeyField">
           <label>API Key</label>
@@ -1638,7 +1655,7 @@
       </div>
       <!-- Scheduler section hidden — controlled via FunnyPi Plan A/B or piweb.config.json -->
       <div id="schedulerSection" style="display:none">
-        <select id="setSchedulerMode"><option value="none"></option><option value="performance"></option><option value="budget"></option><option value="custom"></option></select>
+        <select id="setSchedulerMode"><option value="none"></option><option value="performance"></option><option value="custom"></option></select>
         <input id="schInitInput" type="hidden"><input id="schWorkInput" type="hidden"><input id="schReflectInput" type="hidden"><input id="schCompressInput" type="hidden">
       </div>
       <div class="settings-section" id="funnypiPlanSection" style="display:none">
@@ -1651,13 +1668,47 @@
               <div style="font-size:11px;color:var(--text2)">Quality first, best results</div>
             </div>
           </label>
-          <label class="funnypi-plan-card" id="planCardB" onclick="selectFunnyPiPlan('budget')" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:12px;border:2px solid var(--border);border-radius:var(--radius-sm);transition:var(--transition)">
-            <input type="radio" name="funnypiPlan" value="budget" style="margin-top:1px">
-            <div style="flex:1">
-              <div style="font-weight:600;font-size:13px">Plan B</div>
-              <div style="font-size:11px;color:var(--text2)">Balanced speed & cost</div>
-            </div>
+        </div>
+      </div>
+      <!-- Independent Reflect Endpoint -->
+      <div class="settings-section" id="reflectEndpointSection">
+        <div class="settings-section-header" style="cursor:pointer" onclick="toggleReflectEndpoint()">
+          <div class="settings-section-label" id="reflectEndpointLabel"></div>
+          <label class="toggle-switch" style="margin-left:auto">
+            <input type="checkbox" id="reflectEndpointEnabled" onchange="onReflectEndpointToggle()">
+            <span class="toggle-slider"></span>
           </label>
+        </div>
+        <div id="reflectEndpointFields" style="display:none">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px" id="reflectEndpointDesc"></div>
+          <div class="settings-field">
+            <label id="reflectModeLabel">配置模式</label>
+            <select id="reflectMode" onchange="onReflectModeChange()">
+              <option value="local">本地模型 (仅需地址+模型)</option>
+              <option value="cloud">云端API (需完整配置)</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label>Base URL</label>
+            <input id="reflectBaseURL" type="text" placeholder="http://192.168.1.100:8000/v1">
+          </div>
+          <div id="reflectCloudFields" style="display:none">
+            <div class="settings-field">
+              <label id="reflectProviderLabel">API 格式</label>
+              <select id="reflectProvider" onchange="onReflectProviderChange()">
+                <option value="openai">OpenAI Compatible</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+              </select>
+            </div>
+            <div class="settings-field">
+              <label>API Key</label>
+              <input id="reflectApiKey" type="password" placeholder="sk-...">
+            </div>
+          </div>
+          <div class="settings-field">
+            <label id="reflectModelLabel">模型名</label>
+            <input id="reflectModel" type="text" placeholder="e.g. deepseek-chat, glm-5">
+          </div>
         </div>
       </div>
       <div class="settings-section">
@@ -1714,6 +1765,9 @@
         <svg width="28" height="28" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="url(#piweb-bg)"/><text x="256" y="340" font-family="'Arial Black',sans-serif" font-size="320" font-weight="900" fill="url(#piweb-txt)" text-anchor="middle">Pi</text></svg>
         <span class="sidebar-logo-text">PIweb</span>
       </span>
+      <button class="icon-btn" id="piwebServiceBtn" onclick="togglePiwebService()" title="PIweb Service" style="position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </button>
       <button class="icon-btn" id="wifiBtn" onclick="openWiFi()" title="WiFi" style="position:relative">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
       </button>
@@ -1742,6 +1796,9 @@
         <span class="sidebar-logo-text">PIweb</span>
       </span>
       <span style="flex:1"></span>
+      <button class="icon-btn" id="piwebServiceBtnMobile" onclick="togglePiwebService()" title="PIweb Service" style="min-width:32px;min-height:32px;padding:4px;position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </button>
       <button class="icon-btn" id="wifiBtnMobile" onclick="openWiFi()" title="WiFi" style="min-width:32px;min-height:32px;padding:4px;position:relative">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
       </button>
@@ -1882,6 +1939,54 @@
     // ===== Timer Dialog — simplified chain mode =====
     var _timerSelectedInterval = 0;
     var _timerSelectedCount = 0;
+
+    
+    // PIweb service control via systemctl
+    var _svcStatus = 'unknown';
+
+    function updateSvcBtn(status) {
+      _svcStatus = status;
+      var ids = ['piwebServiceBtn', 'piwebServiceBtnMobile'];
+      ids.forEach(function(id) {
+        var btn = document.getElementById(id);
+        if (!btn) return;
+        btn.className = 'icon-btn' + (status === 'running' ? ' svc-running' : status === 'stopped' ? ' svc-stopped' : ' svc-loading');
+        btn.title = status === 'running' ? 'PIweb running (click to restart)' : status === 'stopped' ? 'PIweb stopped (click to start)' : 'Loading...';
+      });
+    }
+
+    function checkSvcStatus() {
+      fetch('/api/service/status').then(function(r) { return r.json(); }).then(function(d) {
+        updateSvcBtn(d.active ? 'running' : 'stopped');
+      }).catch(function() { updateSvcBtn('unknown'); });
+    }
+
+    function togglePiwebService() {
+      if (_svcStatus === 'running') {
+        var msg = currentLang === 'zh' ? 'Restart PIweb service?' : 'Restart PIweb service?';
+        if (!confirm(msg)) return;
+        updateSvcBtn('loading');
+        fetch('/api/service/restart', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            showToast(d.success ? 'Restarting...' : (d.error || 'Failed'));
+            setTimeout(checkSvcStatus, 3000);
+          }).catch(function(e) { showToast('Error: ' + e); updateSvcBtn('unknown'); });
+      } else {
+        var msg2 = currentLang === 'zh' ? 'Start PIweb service?' : 'Start PIweb service?';
+        if (!confirm(msg2)) return;
+        updateSvcBtn('loading');
+        fetch('/api/service/start', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            showToast(d.success ? 'PIweb started' : (d.error || 'Failed'));
+            setTimeout(checkSvcStatus, 3000);
+          }).catch(function(e) { showToast('Error: ' + e); updateSvcBtn('unknown'); });
+      }
+    }
+
+    checkSvcStatus();
+    setInterval(checkSvcStatus, 30000);
 
     function openTimerDialog() {
       document.getElementById('timerDialogOverlay').classList.add('open');
@@ -2058,7 +2163,12 @@
         dropHere: '拖放文件到这里',
         uploadAttach: '上传附件',
         uploading: '上传中...',
-        fileBlocked: '不允许的文件类型'
+        fileBlocked: '不允许的文件类型',
+        reflectEndpoint: '回溯模型 (独立配置)',
+        reflectEndpointDesc: '启用后，回溯纠错阶段将使用独立的模型。本地模式只需填地址和模型名，云端模式需完整配置。',
+        reflectModeLabel: '配置模式',
+        reflectProviderLabel: 'API 格式',
+        reflectModelLabel: '模型名'
       },
       en: {
         settings: 'Settings', cancel: 'Cancel', save: 'Save',
@@ -2116,7 +2226,12 @@
         dropHere: 'Drop files here',
         uploadAttach: 'Upload attachment',
         uploading: 'Uploading...',
-        fileBlocked: 'File type not allowed'
+        fileBlocked: 'File type not allowed',
+        reflectEndpoint: 'Reflect Model (Independent)',
+        reflectEndpointDesc: 'When enabled, uses a separate model for reflection. Local mode needs only baseURL + model, cloud mode needs full config.',
+        reflectModeLabel: 'Mode',
+        reflectProviderLabel: 'API Format',
+        reflectModelLabel: 'Model'
       }
     };
 
@@ -3616,7 +3731,7 @@
       return 'custom';
     }
 
-    function onProviderChange() {
+    function onProviderChange(skipValueUpdate) {
       var sel = document.getElementById('setProvider');
       var preset = getPreset(sel.value);
       if (!preset) return;
@@ -3633,7 +3748,7 @@
       // FunnyPi mode: hide model/maxTokens, show plan A/B
       if (isFunnyPi) {
         baseURLField.style.display = 'none';
-        baseURLInput.value = preset.baseURL;
+        if (!skipValueUpdate) baseURLInput.value = preset.baseURL;
         apiKeyField.style.display = '';
         modelField.style.display = 'none';
         maxTokensField.style.display = 'none';
@@ -3646,17 +3761,16 @@
       maxTokensField.style.display = '';
       funnypiPlanSection.style.display = 'none';
 
-      // Fill baseURL
+      // Fill baseURL - auto-populate preset default value only if user switched provider
       if (preset.value === 'custom') {
         baseURLField.style.display = '';
-        baseURLInput.value = '';
+        if (!skipValueUpdate) baseURLInput.value = '';
         baseURLInput.placeholder = 'https://your-api-endpoint/v1';
       } else if (preset.baseURL) {
-        baseURLField.style.display = 'none';
-        baseURLInput.value = preset.baseURL;
+        baseURLField.style.display = '';
+        if (!skipValueUpdate) baseURLInput.value = preset.baseURL;
       } else {
         baseURLField.style.display = 'none';
-        baseURLInput.value = '';
       }
 
       // API Key visibility
@@ -3681,14 +3795,9 @@
       }
       // Visual highlight
       document.getElementById('planCardA').style.borderColor = mode === 'performance' ? 'var(--accent)' : 'var(--border)';
-      document.getElementById('planCardB').style.borderColor = mode === 'budget' ? 'var(--accent)' : 'var(--border)';
     }
 
     // ===== Scheduler =====
-    var SCHEDULER_PRESETS = {
-      performance: { init: 'claude-sonnet-4-6', work: 'qwen3.5-397b-a17b', reflect: 'claude-opus-4-6', compress: 'qwen3.5-397b-a17b' },
-      budget: { init: 'claude-sonnet-4-6', work: 'minimax-m2.5', reflect: 'glm-5', compress: 'minimax-m2.5' }
-    };
 
     function onSchedulerModeChange() {
       // No-op: scheduler UI is hidden, controlled via FunnyPi Plan A/B or config file
@@ -3713,7 +3822,7 @@
       }
 
       // FunnyPi plan A/B — sync radio from scheduler mode
-      if (mode === 'performance' || mode === 'budget') {
+      if (mode === 'performance') {
         selectFunnyPiPlan(mode);
       } else {
         selectFunnyPiPlan('performance'); // default to A
@@ -3729,15 +3838,108 @@
         return {
           mode: 'custom',
           models: {
-            init: document.getElementById('schInitInput').value.trim() || 'claude-sonnet-4-6',
-            work: document.getElementById('schWorkInput').value.trim() || 'qwen3.5-397b-a17b',
-            reflect: document.getElementById('schReflectInput').value.trim() || 'claude-opus-4-6',
-            compress: document.getElementById('schCompressInput').value.trim() || 'qwen3.5-397b-a17b'
+            init: document.getElementById('schInitInput').value.trim() || '',
+            work: document.getElementById('schWorkInput').value.trim() || '',
+            reflect: document.getElementById('schReflectInput').value.trim() || '',
+            compress: document.getElementById('schCompressInput').value.trim() || ''
           }
         };
       }
-      // performance or budget — just the mode, server uses its presets
+      // performance mode — just the mode, server uses its preset
       return { mode: mode };
+    }
+
+    // ===== Reflect Endpoint =====
+    function toggleReflectEndpoint() {
+      var cb = document.getElementById('reflectEndpointEnabled');
+      cb.checked = !cb.checked;
+      onReflectEndpointToggle();
+    }
+
+    function onReflectEndpointToggle() {
+      var enabled = document.getElementById('reflectEndpointEnabled').checked;
+      document.getElementById('reflectEndpointFields').style.display = enabled ? '' : 'none';
+      if (enabled) onReflectModeChange();
+    }
+
+    function onReflectModeChange() {
+      var mode = document.getElementById('reflectMode').value;
+      var cloudFields = document.getElementById('reflectCloudFields');
+      cloudFields.style.display = mode === 'cloud' ? '' : 'none';
+    }
+
+    function onReflectProviderChange() {
+      var provider = document.getElementById('reflectProvider').value;
+      var urlInput = document.getElementById('reflectBaseURL');
+      if (provider === 'anthropic') {
+        urlInput.placeholder = '(Required) e.g., https://api.anthropic.com';
+      } else {
+        urlInput.placeholder = '(Required) e.g., https://api.openai.com/v1';
+      }
+      // Only keep placeholder, don't override user's saved value
+    }
+
+    function loadReflectEndpointUI(config) {
+      var ep = config.scheduler && config.scheduler.reflectEndpoint;
+      var enabled = ep && ep.enabled;
+      document.getElementById('reflectEndpointEnabled').checked = !!enabled;
+      document.getElementById('reflectEndpointFields').style.display = enabled ? '' : 'none';
+      if (ep) {
+        var mode = (ep.apiKey && ep.apiKey.trim()) ? 'cloud' : 'local';
+        document.getElementById('reflectMode').value = mode;
+        document.getElementById('reflectProvider').value = ep.provider || 'openai';
+        document.getElementById('reflectBaseURL').value = ep.baseURL || '';
+        document.getElementById('reflectApiKey').value = ep.apiKey || '';
+        document.getElementById('reflectModel').value = ep.model || '';
+        onReflectModeChange();
+      } else {
+        document.getElementById('reflectMode').value = 'local';
+        document.getElementById('reflectProvider').value = 'openai';
+        document.getElementById('reflectBaseURL').value = '';
+        document.getElementById('reflectApiKey').value = '';
+        document.getElementById('reflectModel').value = '';
+        onReflectModeChange();
+      }
+    }
+
+    function buildReflectEndpointConfig() {
+      var enabled = document.getElementById('reflectEndpointEnabled').checked;
+      if (!enabled) return undefined;
+      var model = document.getElementById('reflectModel').value.trim();
+      var baseURL = document.getElementById('reflectBaseURL').value.trim();
+      if (!model || !baseURL) return undefined;
+
+      var mode = document.getElementById('reflectMode').value;
+      if (mode === 'local') {
+        return {
+          enabled: true,
+          provider: 'openai',
+          baseURL: baseURL,
+          apiKey: '',
+          model: model
+        };
+      } else {
+        return {
+          enabled: true,
+          provider: document.getElementById('reflectProvider').value,
+          baseURL: baseURL,
+          apiKey: document.getElementById('reflectApiKey').value.trim(),
+          model: model
+        };
+      }
+    }
+
+    function updateReflectEndpointLabels() {
+      var el = document.getElementById('reflectEndpointLabel');
+      if (el) el.textContent = t('reflectEndpoint');
+      var desc = document.getElementById('reflectEndpointDesc');
+      if (desc) desc.textContent = t('reflectEndpointDesc');
+      var modeLabel = document.getElementById('reflectModeLabel');
+      if (modeLabel) modeLabel.textContent = t('reflectModeLabel');
+      var provLabel = document.getElementById('reflectProviderLabel');
+      if (provLabel) provLabel.textContent = t('reflectProviderLabel');
+      var mdlLabel = document.getElementById('reflectModelLabel');
+      if (mdlLabel) mdlLabel.textContent = t('reflectModelLabel');
     }
 
     function toggleKeyVisibility() {
@@ -3783,6 +3985,9 @@
         // Scheduler
         loadSchedulerUI(config);
 
+        // Reflect endpoint
+        loadReflectEndpointUI(config);
+
         // MCP JSON editor
         try {
           document.getElementById('setMCP').value = Object.keys(config.mcp || {}).length > 0
@@ -3797,7 +4002,7 @@
         // Skills toggle list
         renderSkillsToggles(allAvailableSkills);
 
-        onProviderChange();
+        onProviderChange(true);  // skipValueUpdate=true on load
         updateSettingsLabels();
         document.getElementById('settingsOverlay').classList.add('open');
         document.getElementById('settingsPanel').classList.add('open');
@@ -3940,6 +4145,7 @@
       if (cancelBtn) cancelBtn.textContent = t('cancel');
       var saveBtn = document.getElementById('saveBtn');
       if (saveBtn) saveBtn.textContent = t('save');
+      updateReflectEndpointLabels();
     }
 
     function saveSettings() {
@@ -3954,19 +4160,18 @@
       config.preset = presetValue;
       config.provider = preset.type; // 'anthropic' or 'openai'
 
-      // BaseURL: use preset unless custom
-      if (presetValue === 'custom') {
-        var baseURL = document.getElementById('setBaseURL').value.trim();
-        if (baseURL) config.baseURL = baseURL;
+      // BaseURL: always read from input field (preset value is just placeholder)
+      var baseURL = document.getElementById('setBaseURL').value.trim();
+      if (baseURL) {
+        config.baseURL = baseURL;
       } else if (preset.baseURL) {
-        config.baseURL = preset.baseURL;
+        config.baseURL = preset.baseURL;  // fallback to preset only if user didn't fill
       }
 
       var model = document.getElementById('setModel').value.trim();
       if (model) config.model = model;
       var maxTokens = parseInt(document.getElementById('setMaxTokens').value);
       if (maxTokens > 0) config.maxTokens = maxTokens;
-      else config.maxTokens = 8192;
       var systemPrompt = document.getElementById('setSystemPrompt').value.trim();
       if (systemPrompt) config.systemPrompt = systemPrompt;
       var mcpText = document.getElementById('setMCP').value.trim();
@@ -3982,9 +4187,15 @@
       if (presetValue === 'funnypi') {
         var selectedPlan = document.querySelector('input[name="funnypiPlan"]:checked');
         config.scheduler = { mode: selectedPlan ? selectedPlan.value : 'performance' };
-        config.maxTokens = 8192; // sensible default for FunnyPi
       } else {
         config.scheduler = buildSchedulerConfig();
+      }
+
+      // Attach independent reflect endpoint config (works with any provider/scheduler mode)
+      var reflectEp = buildReflectEndpointConfig();
+      if (reflectEp) {
+        if (!config.scheduler) config.scheduler = { mode: 'none' };
+        config.scheduler.reflectEndpoint = reflectEp;
       }
 
       // Save API key first if changed
