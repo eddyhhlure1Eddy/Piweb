@@ -33,6 +33,7 @@ Unlike cloud-only chatbots, PIweb runs **locally on your hardware**, giving you 
 - **No token authentication** — The web server currently has no auth layer. This is intentional for LAN-only usage on Raspberry Pi. **Do not expose to the public internet without adding your own auth.**
 - **LAN access** — After starting, access from any device on your network via `http://<pi-ip>:3000` or `http://127.0.0.1:3000` on the host. Control PIweb from your phone in the same Wi-Fi.
 - **Continuous updates** — Features, stability, and platform support will improve with each release.
+- **FunnyPi API suspended** — Due to rapidly increasing upstream model costs, the FunnyPi proxy service is temporarily shut down. Please configure your own API provider in the meantime. Once costs come down, we will resume offering subsidized Claude quota through FunnyPi.
 
 ---
 
