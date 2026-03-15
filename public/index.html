@@ -1738,28 +1738,27 @@
           <div class="settings-field">
             <label id="visionModeLabel"></label>
             <select id="visionMode" onchange="onVisionModeChange()">
+              <option value="auto">OpenRouter Auto</option>
               <option value="local">Local Model</option>
               <option value="cloud">Cloud API</option>
             </select>
           </div>
-          <div class="settings-field">
+          <div class="settings-field" id="visionApiKeyField">
+            <label>API Key</label>
+            <input id="visionApiKey" type="password" placeholder="sk-or-v1-...">
+          </div>
+          <div class="settings-field" id="visionBaseURLField" style="display:none">
             <label>Base URL</label>
             <input id="visionBaseURL" type="text" placeholder="http://192.168.31.11:8000/v1">
           </div>
-          <div id="visionCloudFields" style="display:none">
-            <div class="settings-field">
-              <label id="visionProviderLabel">API Format</label>
-              <select id="visionProvider" onchange="onVisionProviderChange()">
-                <option value="openai">OpenAI Compatible</option>
-                <option value="anthropic">Anthropic (Claude)</option>
-              </select>
-            </div>
-            <div class="settings-field">
-              <label>API Key</label>
-              <input id="visionApiKey" type="password" placeholder="sk-...">
-            </div>
+          <div class="settings-field" id="visionProviderField" style="display:none">
+            <label id="visionProviderLabel">API Format</label>
+            <select id="visionProvider" onchange="onVisionProviderChange()">
+              <option value="openai">OpenAI Compatible</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+            </select>
           </div>
-          <div class="settings-field">
+          <div class="settings-field" id="visionModelField" style="display:none">
             <label id="visionModelLabel"></label>
             <input id="visionModel" type="text" placeholder="e.g. InternVL3-8B, Qwen-VL">
           </div>
@@ -2226,7 +2225,8 @@
         draftGuideLabel: '策略引导 (Draft Guide)',
         draftGuideDesc: '每轮对话前，回溯模型先生成简短策略指引，帮助工作模型更好地处理请求。',
         visionEndpoint: '视觉模型 (独立配置)',
-        visionEndpointDesc: '启用后，图片将先发给独立的视觉模型分析，再将文字描述传给主模型。留空则图片直接发给主模型（需主模型支持视觉）。',
+        visionEndpointDesc: '启用后，图片将先发给独立的视觉模型分析，再将文字描述传给主模型。关闭则图片直接发给主模型。',
+        visionAutoDesc: 'OpenRouter Auto: 只需填写 API Key，自动使用免费视觉模型，失败自动切换下一个。',
         visionModeLabel: '配置模式',
         visionProviderLabel: 'API 格式',
         visionModelLabel: '模型名'
@@ -2296,7 +2296,8 @@
         draftGuideLabel: 'Draft Guide',
         draftGuideDesc: 'Before each turn, the reflect model generates brief strategy guidance for the worker model.',
         visionEndpoint: 'Vision Model (Independent)',
-        visionEndpointDesc: 'When enabled, images are first analyzed by a separate vision model, then the text description is sent to the main model. Leave empty to send images directly to the main model.',
+        visionEndpointDesc: 'When enabled, images are analyzed by a separate vision model first, then text description is sent to the main model.',
+        visionAutoDesc: 'OpenRouter Auto: just enter your API Key, automatically uses free vision models with failover.',
         visionModeLabel: 'Mode',
         visionProviderLabel: 'API Format',
         visionModelLabel: 'Model'
@@ -4034,8 +4035,30 @@
 
     function onVisionModeChange() {
       var mode = document.getElementById('visionMode').value;
-      var cloudFields = document.getElementById('visionCloudFields');
-      cloudFields.style.display = mode === 'cloud' ? '' : 'none';
+      var keyField = document.getElementById('visionApiKeyField');
+      var urlField = document.getElementById('visionBaseURLField');
+      var provField = document.getElementById('visionProviderField');
+      var mdlField = document.getElementById('visionModelField');
+      var descEl = document.getElementById('visionEndpointDesc');
+      if (mode === 'auto') {
+        keyField.style.display = '';
+        urlField.style.display = 'none';
+        provField.style.display = 'none';
+        mdlField.style.display = 'none';
+        if (descEl) descEl.textContent = t('visionAutoDesc');
+      } else if (mode === 'local') {
+        keyField.style.display = 'none';
+        urlField.style.display = '';
+        provField.style.display = 'none';
+        mdlField.style.display = '';
+        if (descEl) descEl.textContent = t('visionEndpointDesc');
+      } else {
+        keyField.style.display = '';
+        urlField.style.display = '';
+        provField.style.display = '';
+        mdlField.style.display = '';
+        if (descEl) descEl.textContent = t('visionEndpointDesc');
+      }
     }
 
     function onVisionProviderChange() {
@@ -4054,15 +4077,15 @@
       document.getElementById('visionEndpointEnabled').checked = !!enabled;
       document.getElementById('visionEndpointFields').style.display = enabled ? '' : 'none';
       if (ep) {
-        var mode = (ep.apiKey && ep.apiKey.trim()) ? 'cloud' : 'local';
+        var mode = ep.mode === 'auto' ? 'auto' : ((ep.apiKey && ep.apiKey.trim()) ? 'cloud' : 'local');
         document.getElementById('visionMode').value = mode;
         document.getElementById('visionProvider').value = ep.provider || 'openai';
         document.getElementById('visionBaseURL').value = ep.baseURL || '';
         document.getElementById('visionApiKey').value = ep.apiKey || '';
-        document.getElementById('visionModel').value = ep.model || '';
+        document.getElementById('visionModel').value = (ep.mode === 'auto' ? '' : ep.model) || '';
         onVisionModeChange();
       } else {
-        document.getElementById('visionMode').value = 'local';
+        document.getElementById('visionMode').value = 'auto';
         document.getElementById('visionProvider').value = 'openai';
         document.getElementById('visionBaseURL').value = '';
         document.getElementById('visionApiKey').value = '';
@@ -4074,28 +4097,34 @@
     function buildVisionEndpointConfig() {
       var enabled = document.getElementById('visionEndpointEnabled').checked;
       if (!enabled) return undefined;
+      var mode = document.getElementById('visionMode').value;
+      if (mode === 'auto') {
+        var key = document.getElementById('visionApiKey').value.trim();
+        if (!key) return undefined;
+        return {
+          enabled: true, mode: 'auto',
+          provider: 'openai',
+          baseURL: 'https://openrouter.ai/api/v1',
+          apiKey: key, model: 'auto'
+        };
+      }
       var model = document.getElementById('visionModel').value.trim();
       var baseURL = document.getElementById('visionBaseURL').value.trim();
       if (!model || !baseURL) return undefined;
-
-      var mode = document.getElementById('visionMode').value;
       if (mode === 'local') {
         return {
-          enabled: true,
-          provider: 'openai',
-          baseURL: baseURL,
-          apiKey: '',
-          model: model
-        };
-      } else {
-        return {
-          enabled: true,
-          provider: document.getElementById('visionProvider').value,
-          baseURL: baseURL,
-          apiKey: document.getElementById('visionApiKey').value.trim(),
-          model: model
+          enabled: true, mode: 'manual',
+          provider: 'openai', baseURL: baseURL,
+          apiKey: '', model: model
         };
       }
+      return {
+        enabled: true, mode: 'manual',
+        provider: document.getElementById('visionProvider').value,
+        baseURL: baseURL,
+        apiKey: document.getElementById('visionApiKey').value.trim(),
+        model: model
+      };
     }
 
     function updateVisionEndpointLabels() {
