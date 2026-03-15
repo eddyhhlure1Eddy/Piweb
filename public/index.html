@@ -4498,7 +4498,8 @@
     }
 
     function _compressToJpeg(source, origW, origH, closeable) {
-      var maxDim = 1024;
+      var TARGET_BYTES = 64 * 1024; // 64KB target
+      var maxDim = 768;
       var w = origW, h = origH;
       if (w > maxDim || h > maxDim) {
         if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
@@ -4509,9 +4510,32 @@
       canvas.height = h;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(source, 0, 0, w, h);
-      if (closeable && source.close) source.close(); // Free ImageBitmap memory immediately
-      var compressed = canvas.toDataURL('image/jpeg', 0.75);
-      canvas.width = 1; canvas.height = 1; // Free canvas memory
+      if (closeable && source.close) source.close();
+      // Iterative compression: reduce quality until under 64KB
+      var quality = 0.7;
+      var compressed = canvas.toDataURL('image/jpeg', quality);
+      var b64Len = compressed.length - compressed.indexOf(',') - 1;
+      var rawBytes = Math.round(b64Len * 3 / 4);
+      while (rawBytes > TARGET_BYTES && quality > 0.15) {
+        quality -= 0.1;
+        compressed = canvas.toDataURL('image/jpeg', quality);
+        b64Len = compressed.length - compressed.indexOf(',') - 1;
+        rawBytes = Math.round(b64Len * 3 / 4);
+      }
+      // Still too large: scale down by redrawing canvas onto itself
+      if (rawBytes > TARGET_BYTES) {
+        var scale = Math.sqrt(TARGET_BYTES / rawBytes) * 0.9;
+        var nw = Math.max(Math.round(w * scale), 64);
+        var nh = Math.max(Math.round(h * scale), 64);
+        var tmp = document.createElement('canvas');
+        tmp.width = nw; tmp.height = nh;
+        tmp.getContext('2d').drawImage(canvas, 0, 0, nw, nh);
+        canvas.width = nw; canvas.height = nh;
+        canvas.getContext('2d').drawImage(tmp, 0, 0);
+        tmp.width = 1; tmp.height = 1;
+        compressed = canvas.toDataURL('image/jpeg', 0.4);
+      }
+      canvas.width = 1; canvas.height = 1;
       pendingImages.push(compressed);
       renderAttachmentPreviews();
     }
