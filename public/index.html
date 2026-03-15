@@ -1626,7 +1626,7 @@
         </div>
         <div class="settings-field" id="baseURLField">
           <label>Base URL</label>
-          <input id="setBaseURL" type="text" placeholder="e.g. http://192.168.1.100:8000/v1">
+          <input id="setBaseURL" type="text" placeholder="e.g. http://192.168.31.11:8000/v1">
         </div>
         <div class="settings-field" id="apiKeyField">
           <label>API Key</label>
@@ -1690,7 +1690,7 @@
           </div>
           <div class="settings-field">
             <label>Base URL</label>
-            <input id="reflectBaseURL" type="text" placeholder="http://192.168.1.100:8000/v1">
+            <input id="reflectBaseURL" type="text" placeholder="http://192.168.31.11:8000/v1">
           </div>
           <div id="reflectCloudFields" style="display:none">
             <div class="settings-field">
@@ -1708,6 +1708,60 @@
           <div class="settings-field">
             <label id="reflectModelLabel">模型名</label>
             <input id="reflectModel" type="text" placeholder="e.g. deepseek-chat, glm-5">
+          </div>
+          <!-- Draft Guide Toggle -->
+          <div class="settings-field" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+              <span>
+                <span id="draftGuideLabel" style="font-size:13px;font-weight:500"></span>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px" id="draftGuideDesc"></div>
+              </span>
+              <label class="toggle-switch" style="margin-left:12px;flex-shrink:0">
+                <input type="checkbox" id="draftGuideEnabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Independent Vision Endpoint -->
+      <div class="settings-section" id="visionEndpointSection">
+        <div class="settings-section-header" style="cursor:pointer" onclick="toggleVisionEndpoint()">
+          <div class="settings-section-label" id="visionEndpointLabel"></div>
+          <label class="toggle-switch" style="margin-left:auto">
+            <input type="checkbox" id="visionEndpointEnabled" onchange="onVisionEndpointToggle()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div id="visionEndpointFields" style="display:none">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px" id="visionEndpointDesc"></div>
+          <div class="settings-field">
+            <label id="visionModeLabel"></label>
+            <select id="visionMode" onchange="onVisionModeChange()">
+              <option value="local">Local Model</option>
+              <option value="cloud">Cloud API</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label>Base URL</label>
+            <input id="visionBaseURL" type="text" placeholder="http://192.168.31.11:8000/v1">
+          </div>
+          <div id="visionCloudFields" style="display:none">
+            <div class="settings-field">
+              <label id="visionProviderLabel">API Format</label>
+              <select id="visionProvider" onchange="onVisionProviderChange()">
+                <option value="openai">OpenAI Compatible</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+              </select>
+            </div>
+            <div class="settings-field">
+              <label>API Key</label>
+              <input id="visionApiKey" type="password" placeholder="sk-...">
+            </div>
+          </div>
+          <div class="settings-field">
+            <label id="visionModelLabel"></label>
+            <input id="visionModel" type="text" placeholder="e.g. InternVL3-8B, Qwen-VL">
           </div>
         </div>
       </div>
@@ -2168,7 +2222,14 @@
         reflectEndpointDesc: '启用后，回溯纠错阶段将使用独立的模型。本地模式只需填地址和模型名，云端模式需完整配置。',
         reflectModeLabel: '配置模式',
         reflectProviderLabel: 'API 格式',
-        reflectModelLabel: '模型名'
+        reflectModelLabel: '模型名',
+        draftGuideLabel: '策略引导 (Draft Guide)',
+        draftGuideDesc: '每轮对话前，回溯模型先生成简短策略指引，帮助工作模型更好地处理请求。',
+        visionEndpoint: '视觉模型 (独立配置)',
+        visionEndpointDesc: '启用后，图片将先发给独立的视觉模型分析，再将文字描述传给主模型。留空则图片直接发给主模型（需主模型支持视觉）。',
+        visionModeLabel: '配置模式',
+        visionProviderLabel: 'API 格式',
+        visionModelLabel: '模型名'
       },
       en: {
         settings: 'Settings', cancel: 'Cancel', save: 'Save',
@@ -2231,7 +2292,14 @@
         reflectEndpointDesc: 'When enabled, uses a separate model for reflection. Local mode needs only baseURL + model, cloud mode needs full config.',
         reflectModeLabel: 'Mode',
         reflectProviderLabel: 'API Format',
-        reflectModelLabel: 'Model'
+        reflectModelLabel: 'Model',
+        draftGuideLabel: 'Draft Guide',
+        draftGuideDesc: 'Before each turn, the reflect model generates brief strategy guidance for the worker model.',
+        visionEndpoint: 'Vision Model (Independent)',
+        visionEndpointDesc: 'When enabled, images are first analyzed by a separate vision model, then the text description is sent to the main model. Leave empty to send images directly to the main model.',
+        visionModeLabel: 'Mode',
+        visionProviderLabel: 'API Format',
+        visionModelLabel: 'Model'
       }
     };
 
@@ -3891,6 +3959,7 @@
         document.getElementById('reflectBaseURL').value = ep.baseURL || '';
         document.getElementById('reflectApiKey').value = ep.apiKey || '';
         document.getElementById('reflectModel').value = ep.model || '';
+        document.getElementById('draftGuideEnabled').checked = !!ep.draftGuide;
         onReflectModeChange();
       } else {
         document.getElementById('reflectMode').value = 'local';
@@ -3898,6 +3967,7 @@
         document.getElementById('reflectBaseURL').value = '';
         document.getElementById('reflectApiKey').value = '';
         document.getElementById('reflectModel').value = '';
+        document.getElementById('draftGuideEnabled').checked = false;
         onReflectModeChange();
       }
     }
@@ -3910,13 +3980,15 @@
       if (!model || !baseURL) return undefined;
 
       var mode = document.getElementById('reflectMode').value;
+      var draftGuide = document.getElementById('draftGuideEnabled').checked;
       if (mode === 'local') {
         return {
           enabled: true,
           provider: 'openai',
           baseURL: baseURL,
           apiKey: '',
-          model: model
+          model: model,
+          draftGuide: draftGuide
         };
       } else {
         return {
@@ -3924,7 +3996,8 @@
           provider: document.getElementById('reflectProvider').value,
           baseURL: baseURL,
           apiKey: document.getElementById('reflectApiKey').value.trim(),
-          model: model
+          model: model,
+          draftGuide: draftGuide
         };
       }
     }
@@ -3940,6 +4013,102 @@
       if (provLabel) provLabel.textContent = t('reflectProviderLabel');
       var mdlLabel = document.getElementById('reflectModelLabel');
       if (mdlLabel) mdlLabel.textContent = t('reflectModelLabel');
+      var dgLabel = document.getElementById('draftGuideLabel');
+      if (dgLabel) dgLabel.textContent = t('draftGuideLabel');
+      var dgDesc = document.getElementById('draftGuideDesc');
+      if (dgDesc) dgDesc.textContent = t('draftGuideDesc');
+    }
+
+    // ===== Vision Endpoint =====
+    function toggleVisionEndpoint() {
+      var cb = document.getElementById('visionEndpointEnabled');
+      cb.checked = !cb.checked;
+      onVisionEndpointToggle();
+    }
+
+    function onVisionEndpointToggle() {
+      var enabled = document.getElementById('visionEndpointEnabled').checked;
+      document.getElementById('visionEndpointFields').style.display = enabled ? '' : 'none';
+      if (enabled) onVisionModeChange();
+    }
+
+    function onVisionModeChange() {
+      var mode = document.getElementById('visionMode').value;
+      var cloudFields = document.getElementById('visionCloudFields');
+      cloudFields.style.display = mode === 'cloud' ? '' : 'none';
+    }
+
+    function onVisionProviderChange() {
+      var provider = document.getElementById('visionProvider').value;
+      var urlInput = document.getElementById('visionBaseURL');
+      if (provider === 'anthropic') {
+        urlInput.placeholder = '(Required) e.g., https://api.anthropic.com';
+      } else {
+        urlInput.placeholder = '(Required) e.g., http://192.168.31.11:8000/v1';
+      }
+    }
+
+    function loadVisionEndpointUI(config) {
+      var ep = config.visionEndpoint;
+      var enabled = ep && ep.enabled;
+      document.getElementById('visionEndpointEnabled').checked = !!enabled;
+      document.getElementById('visionEndpointFields').style.display = enabled ? '' : 'none';
+      if (ep) {
+        var mode = (ep.apiKey && ep.apiKey.trim()) ? 'cloud' : 'local';
+        document.getElementById('visionMode').value = mode;
+        document.getElementById('visionProvider').value = ep.provider || 'openai';
+        document.getElementById('visionBaseURL').value = ep.baseURL || '';
+        document.getElementById('visionApiKey').value = ep.apiKey || '';
+        document.getElementById('visionModel').value = ep.model || '';
+        onVisionModeChange();
+      } else {
+        document.getElementById('visionMode').value = 'local';
+        document.getElementById('visionProvider').value = 'openai';
+        document.getElementById('visionBaseURL').value = '';
+        document.getElementById('visionApiKey').value = '';
+        document.getElementById('visionModel').value = '';
+        onVisionModeChange();
+      }
+    }
+
+    function buildVisionEndpointConfig() {
+      var enabled = document.getElementById('visionEndpointEnabled').checked;
+      if (!enabled) return undefined;
+      var model = document.getElementById('visionModel').value.trim();
+      var baseURL = document.getElementById('visionBaseURL').value.trim();
+      if (!model || !baseURL) return undefined;
+
+      var mode = document.getElementById('visionMode').value;
+      if (mode === 'local') {
+        return {
+          enabled: true,
+          provider: 'openai',
+          baseURL: baseURL,
+          apiKey: '',
+          model: model
+        };
+      } else {
+        return {
+          enabled: true,
+          provider: document.getElementById('visionProvider').value,
+          baseURL: baseURL,
+          apiKey: document.getElementById('visionApiKey').value.trim(),
+          model: model
+        };
+      }
+    }
+
+    function updateVisionEndpointLabels() {
+      var el = document.getElementById('visionEndpointLabel');
+      if (el) el.textContent = t('visionEndpoint');
+      var desc = document.getElementById('visionEndpointDesc');
+      if (desc) desc.textContent = t('visionEndpointDesc');
+      var modeLabel = document.getElementById('visionModeLabel');
+      if (modeLabel) modeLabel.textContent = t('visionModeLabel');
+      var provLabel = document.getElementById('visionProviderLabel');
+      if (provLabel) provLabel.textContent = t('visionProviderLabel');
+      var mdlLabel = document.getElementById('visionModelLabel');
+      if (mdlLabel) mdlLabel.textContent = t('visionModelLabel');
     }
 
     function toggleKeyVisibility() {
@@ -3987,6 +4156,9 @@
 
         // Reflect endpoint
         loadReflectEndpointUI(config);
+
+        // Vision endpoint
+        loadVisionEndpointUI(config);
 
         // MCP JSON editor
         try {
@@ -4146,6 +4318,7 @@
       var saveBtn = document.getElementById('saveBtn');
       if (saveBtn) saveBtn.textContent = t('save');
       updateReflectEndpointLabels();
+      updateVisionEndpointLabels();
     }
 
     function saveSettings() {
@@ -4196,6 +4369,12 @@
       if (reflectEp) {
         if (!config.scheduler) config.scheduler = { mode: 'none' };
         config.scheduler.reflectEndpoint = reflectEp;
+      }
+
+      // Attach independent vision endpoint config
+      var visionEp = buildVisionEndpointConfig();
+      if (visionEp) {
+        config.visionEndpoint = visionEp;
       }
 
       // Save API key first if changed
