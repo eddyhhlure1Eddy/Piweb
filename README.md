@@ -2,7 +2,7 @@
 
 > A smart, autonomous AI companion that lives on your device. Not just a chatbot — it plans, remembers, and acts on its own.
 
-![Version](https://img.shields.io/badge/version-2.0.0--pre-orange)
+![Version](https://img.shields.io/badge/version-2.1.0-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-green)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20(RPi)-lightgrey)
@@ -27,13 +27,12 @@ Unlike cloud-only chatbots, PIweb runs **locally on your hardware**, giving you 
 
 ## Pre-Release Notice
 
-> **This is a pre-release version (v2.0.0-pre).**
+> **Current release: v2.1.0**
 
 - **Partial open source** — Core agent logic is obfuscated; skills, configs, docs, and frontend are open. Full open-source release planned for a future version.
 - **No token authentication** — The web server currently has no auth layer. This is intentional for LAN-only usage on Raspberry Pi. **Do not expose to the public internet without adding your own auth.**
 - **LAN access** — After starting, access from any device on your network via `http://<pi-ip>:3000` or `http://127.0.0.1:3000` on the host. Control PIweb from your phone in the same Wi-Fi.
 - **Continuous updates** — Features, stability, and platform support will improve with each release.
-- **FunnyPi API suspended** — Due to rapidly increasing upstream model costs, the FunnyPi proxy service is temporarily shut down. Please configure your own API provider in the meantime. Once costs come down, we will resume offering subsidized Claude quota through FunnyPi.
 
 ---
 
@@ -78,7 +77,7 @@ Unlike cloud-only chatbots, PIweb runs **locally on your hardware**, giving you 
 | Planning | `grid_run` `grid_execute` `grid_list` `grid_delete` | Multi-step autonomous task planning and execution |
 | Thinking | `soul_think` `soul_list` `soul_delete` | Multi-perspective deep analysis |
 | Parallel | `swarm_run` `swarm_execute` `swarm_list` `swarm_delete` | Multi-agent parallel task decomposition |
-| Scheduling | `set_timer` `cancel_timer` `list_timers` | User-triggered timers, reminders, cron loops |
+| Scheduling | `set_timer` `cancel_timer` `list_timers` | Self-scheduling, wake-up timers, cron loops |
 | Skills | `skill_run` `skill_list` | Direct skill invocation |
 
 ---
@@ -119,9 +118,9 @@ Decomposes tasks into parallelizable subtasks, each handled by an independent ag
 - Each agent has full tool access (files, shell, web)
 - 2–8 configurable parallel workers
 
-### Timers — User-Triggered Scheduling
+### Timers — Autonomous Scheduling
 
-Set timers and reminders when you need them — the AI only creates timers when you explicitly ask:
+The AI can set timers to wake itself up and continue working autonomously:
 
 ```
 User: Remind me to drink water in 5 minutes
@@ -132,7 +131,6 @@ PIweb: ⏰ Time to drink water!
 
 - **One-shot timers** — fire after N seconds
 - **Recurring tasks** — cron expressions (e.g., `*/30 * * * *` = every 30 min)
-- **Chain execution** — multi-fire sequences with automatic tool invocation
 - **Persistent** — survives process restarts
 - **Natural language** — parses "in half an hour", "tomorrow at 8am", "every 10 minutes"
 
@@ -356,32 +354,16 @@ Full open-source release with a proper license is planned for a future version. 
 
 ## Changelog
 
-### v2.0.1-pre (2026-02-27 22:00 UTC+8)
-
-- **New branch: `Pi_linux`** — dedicated Raspberry Pi / Linux ARM64 release
-  - Obfuscated dist-only build (no source code), optimized for Pi deployment
-  - Includes `piweb.service` (systemd), `install-service.sh`, `start-piweb.sh`
-- **Frontend**: added service restart button in Web UI for Pi remote management
-- **`edit_file` tool**: new targeted string-replacement tool — eliminates model falling back to bash+sed for file edits
-- **`read_file` pagination**: added `offset`/`limit` params with line numbers for large file navigation
-- **Memory ID fix**: `memory_read` now returns entry IDs, enabling `memory_delete` to work correctly
-- **Screenshot Linux fix**: uses `python3` instead of `py`, correct path separators on Linux
-- **Dispatcher**: memory entries include IDs in system prompt; improved truncation messages
-- **Tool descriptions**: bash description now explicitly discourages file read/edit operations, guiding model to use dedicated tools
-
-### v2.0.0-pre (2026-02-27)
+### v2.0.0-pre (Current)
 
 - Grids: multi-step autonomous task planning
 - Soul: multi-perspective deep thinking engine
 - Swarm: parallel multi-agent execution
-- Timers: user-triggered scheduling with chain execution support
-- **Context Dispatcher**: intelligent per-request context optimization — 87% system prompt reduction, intent-based tool selection, memory filtering
-- **Improved long-chain task execution**: reliable multi-step tool calling with session history trimming, MCP tool caching, and API timeout protection
-- **Improved tool calling reliability**: eliminated tool hallucination (model describing tool usage in text instead of actually calling), intent-based tool filtering prevents irrelevant tool injection
+- Timers: autonomous self-scheduling system
 - Smart context compression (unlimited conversations)
 - Multi-provider support (15+ services, local + cloud)
 - Web Settings panel with hot-reload
-- MCP tool extensions with 60s cache and 5s per-server timeout
+- MCP tool extensions
 - Extensible skill system
 - Persistent long-term memory
 - Responsive Web UI (mobile-friendly, LAN access)

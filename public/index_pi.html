@@ -777,58 +777,6 @@
     .soul-synthesis-label { font-weight: 600; color: #a78bfa; margin-bottom: 4px; font-size: 11px; }
     .soul-synthesis-text { color: var(--text); }
 
-    /* ===== Swarm Cards ===== */
-    .swarm-card {
-      margin: 8px 0; border-radius: var(--radius); border: 1px solid var(--border);
-      background: var(--surface); overflow: hidden; animation: msgIn 0.25s ease-out; max-width: 90%;
-    }
-    .swarm-header {
-      padding: 12px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
-    }
-    .swarm-header .swarm-spinner {
-      width: 16px; height: 16px; border: 2px solid #f97316; border-top-color: transparent;
-      border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;
-    }
-    .swarm-card.completed .swarm-spinner, .swarm-card.failed .swarm-spinner { display: none; }
-    .swarm-title { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
-    .swarm-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; flex-shrink: 0; }
-    .swarm-card.planning .swarm-status { color: var(--yellow); background: var(--yellow-soft); }
-    .swarm-card.planned .swarm-status { color: var(--accent); background: var(--accent-soft); }
-    .swarm-card.executing .swarm-status { color: #f97316; background: rgba(249,115,22,0.1); }
-    .swarm-card.completed .swarm-status { color: var(--green); background: rgba(34,197,94,0.1); }
-    .swarm-card.failed .swarm-status { color: var(--red); background: rgba(239,68,68,0.1); }
-    .swarm-tasks { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; }
-    .swarm-task {
-      flex: 1 1 calc(50% - 8px); min-width: 180px; border: 1px solid var(--border);
-      border-radius: var(--radius-sm, 8px); padding: 10px; background: var(--surface2, var(--surface));
-      transition: all 0.2s; position: relative;
-    }
-    .swarm-task.running { border-color: #f97316; background: rgba(249,115,22,0.05); }
-    .swarm-task.completed { opacity: 0.8; }
-    .swarm-task.failed { border-color: var(--red); background: rgba(239,68,68,0.05); }
-    .swarm-task.skipped { opacity: 0.5; }
-    .swarm-task-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-    .swarm-task-id {
-      width: 20px; height: 20px; border-radius: 50%; background: var(--surface3, var(--surface));
-      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 600; color: var(--text2); flex-shrink: 0;
-    }
-    .swarm-task.running .swarm-task-id { border-color: #f97316; color: #f97316; background: rgba(249,115,22,0.1); }
-    .swarm-task.completed .swarm-task-id { border-color: var(--green); color: #fff; background: var(--green); }
-    .swarm-task.failed .swarm-task-id { border-color: var(--red); color: #fff; background: var(--red); }
-    .swarm-task-name { font-size: 12px; font-weight: 500; color: var(--text); }
-    .swarm-task-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
-    .swarm-task-deps { font-size: 10px; color: var(--text3, var(--text2)); margin-top: 4px; opacity: 0.7; }
-    .swarm-task-spinner {
-      position: absolute; top: 10px; right: 10px; width: 12px; height: 12px;
-      border: 2px solid #f97316; border-top-color: transparent; border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    .swarm-task:not(.running) .swarm-task-spinner { display: none; }
-    .swarm-footer { padding: 8px 16px; border-top: 1px solid var(--border); font-size: 12px; font-weight: 500; }
-    .swarm-card.completed .swarm-footer { color: var(--green); }
-    .swarm-card.failed .swarm-footer { color: var(--red); }
-
     /* ===== Settings Panel ===== */
     .settings-overlay {
       position: fixed;
@@ -2355,7 +2303,6 @@
         tools: ' 工具', gridLabel: 'Grid', stepLabel: '步骤',
         gridPlanning: '正在规划...', gridPlanTitle: '执行计划', gridStepOf: '步骤', gridSkillGap: '缺失技能', gridComplete: '已完成', gridFailed: '失败', gridExecuting: '执行中',
         soulTitle: '多视角分析', soulThinking: '思考中...', soulSynthesizing: '综合分析中...', soulComplete: '分析完成', soulFailed: '分析失败', soulSynthesis: '综合结论',
-        swarmTitle: '并行任务', swarmPlanning: '规划中...', swarmExecuting: '执行中', swarmComplete: '已完成', swarmFailed: '失败', swarmTasks: '任务', swarmDeps: '依赖',
         fontSmall: '小', fontMedium: '中', fontLarge: '大',
         noOutput: '(无输出)', download: '下载',
         mcpJsonPlaceholder: '{"server-name": {"command": "...", "args": [...]}}',
@@ -2413,7 +2360,6 @@
         tools: ' tools', gridLabel: 'Grid', stepLabel: 'Step',
         gridPlanning: 'Planning...', gridPlanTitle: 'Execution Plan', gridStepOf: 'Step', gridSkillGap: 'Missing Skills', gridComplete: 'Complete', gridFailed: 'Failed', gridExecuting: 'Executing',
         soulTitle: 'Multi-Perspective Analysis', soulThinking: 'Thinking...', soulSynthesizing: 'Synthesizing...', soulComplete: 'Analysis Complete', soulFailed: 'Analysis Failed', soulSynthesis: 'Synthesis',
-        swarmTitle: 'Parallel Tasks', swarmPlanning: 'Planning...', swarmExecuting: 'Executing', swarmComplete: 'Complete', swarmFailed: 'Failed', swarmTasks: 'tasks', swarmDeps: 'depends on',
         fontSmall: 'Small', fontMedium: 'Medium', fontLarge: 'Large',
         noOutput: '(no output)', download: 'Download',
         mcpJsonPlaceholder: '{"server-name": {"command": "...", "args": [...]}}',
@@ -2991,7 +2937,7 @@
             activeToolCards[atKey] = atCard;
           }
 
-          // 4. Render grid/soul/swarm cards (reuse existing rendering from renderSessionMessages format)
+          // 4. Render grid/soul cards (reuse existing rendering from renderSessionMessages format)
           if (msg.grids) {
             for (var sgi = 0; sgi < msg.grids.length; sgi++) {
               var sgd = msg.grids[sgi];
@@ -3046,30 +2992,6 @@
               if (ssd.synthesis) ssHtml += '<div class="soul-synthesis">' + esc(ssd.synthesis).slice(0, 200) + '</div>';
               ssCard.innerHTML = ssHtml;
               snapContainer.appendChild(ssCard);
-            }
-          }
-
-          if (msg.swarms) {
-            for (var swi = 0; swi < msg.swarms.length; swi++) {
-              var swd = msg.swarms[swi];
-              var swCard = document.createElement('div');
-              swCard.className = 'swarm-card ' + (swd.status || 'executing');
-              swCard.id = 'swarm-' + swd.planId;
-              var swHtml = '<div class="swarm-header">' +
-                '<span class="swarm-title">' + esc(swd.goal || '').slice(0, 80) + '</span>' +
-              '</div><div class="swarm-tasks">';
-              if (swd.tasks) {
-                for (var sti2 = 0; sti2 < swd.tasks.length; sti2++) {
-                  var st = swd.tasks[sti2];
-                  swHtml += '<div class="swarm-task ' + (st.status || 'pending') + '">' +
-                    '<span class="swarm-task-name">' + esc(st.name || '') + '</span>' +
-                    '<span class="swarm-task-status">' + (st.status === 'done' || st.status === 'completed' ? '\u2713' : st.status === 'running' ? '\u23F3' : '\u2022') + '</span>' +
-                  '</div>';
-                }
-              }
-              swHtml += '</div>';
-              swCard.innerHTML = swHtml;
-              snapContainer.appendChild(swCard);
             }
           }
 
@@ -3342,98 +3264,6 @@
           break;
         }
 
-        // ===== Swarm Events =====
-        case 'swarm_planning': {
-          var swarmCard = document.createElement('div');
-          swarmCard.className = 'swarm-card planning';
-          swarmCard.id = 'swarm-' + msg.planId;
-          swarmCard.innerHTML =
-            '<div class="swarm-header">' +
-              '<div class="swarm-spinner"></div>' +
-              '<span class="swarm-title">' + t('swarmTitle') + ': ' + esc(msg.goal || '').slice(0, 80) + '</span>' +
-              '<span class="swarm-status">' + t('swarmPlanning') + '</span>' +
-            '</div>' +
-            '<div class="swarm-tasks"></div>';
-          document.getElementById('chatContainer').appendChild(swarmCard);
-          scrollToBottom();
-          break;
-        }
-        case 'swarm_plan_ready': {
-          var swarmEl = document.getElementById('swarm-' + msg.planId);
-          if (!swarmEl) {
-            swarmEl = document.createElement('div');
-            swarmEl.id = 'swarm-' + msg.planId;
-            swarmEl.innerHTML = '<div class="swarm-header"><span class="swarm-title"></span><span class="swarm-status"></span></div><div class="swarm-tasks"></div>';
-            document.getElementById('chatContainer').appendChild(swarmEl);
-          }
-          swarmEl.className = 'swarm-card planned';
-          var swStatus = swarmEl.querySelector('.swarm-status');
-          if (swStatus) swStatus.textContent = (msg.tasks || []).length + ' ' + t('swarmTasks');
-          var tasksContainer = swarmEl.querySelector('.swarm-tasks');
-          if (tasksContainer && msg.tasks) {
-            var tasksHtml = '';
-            for (var ti = 0; ti < msg.tasks.length; ti++) {
-              var td = msg.tasks[ti];
-              var depsText = td.dependencies && td.dependencies.length > 0
-                ? '<div class="swarm-task-deps">' + t('swarmDeps') + ': ' + td.dependencies.join(', ') + '</div>' : '';
-              tasksHtml += '<div class="swarm-task pending" id="swarm-task-' + msg.planId + '-' + td.id + '">' +
-                '<div class="swarm-task-spinner"></div>' +
-                '<div class="swarm-task-header">' +
-                  '<div class="swarm-task-id">' + esc(td.id) + '</div>' +
-                  '<span class="swarm-task-name">' + esc(td.name) + '</span>' +
-                '</div>' +
-                '<div class="swarm-task-desc">' + esc(td.description || '').slice(0, 80) + '</div>' +
-                depsText + '</div>';
-            }
-            tasksContainer.innerHTML = tasksHtml;
-          }
-          scrollToBottom();
-          break;
-        }
-        case 'swarm_task_start': {
-          var swarmEl2 = document.getElementById('swarm-' + msg.planId);
-          if (swarmEl2) {
-            swarmEl2.className = 'swarm-card executing';
-            var swStatus2 = swarmEl2.querySelector('.swarm-status');
-            if (swStatus2) swStatus2.textContent = t('swarmExecuting');
-          }
-          var taskEl = document.getElementById('swarm-task-' + msg.planId + '-' + msg.taskId);
-          if (taskEl) taskEl.className = 'swarm-task running';
-          scrollToBottom();
-          break;
-        }
-        case 'swarm_task_end': {
-          var taskEl2 = document.getElementById('swarm-task-' + msg.planId + '-' + msg.taskId);
-          if (taskEl2) {
-            taskEl2.className = 'swarm-task ' + (msg.status || 'completed');
-            var idEl = taskEl2.querySelector('.swarm-task-id');
-            if (idEl) idEl.textContent = msg.status === 'completed' ? '\u2713' : msg.status === 'failed' ? '\u2717' : msg.taskId;
-          }
-          scrollToBottom();
-          break;
-        }
-        case 'swarm_complete': {
-          var swarmEl3 = document.getElementById('swarm-' + msg.planId);
-          if (swarmEl3) {
-            swarmEl3.className = 'swarm-card completed';
-            var swStatus3 = swarmEl3.querySelector('.swarm-status');
-            if (swStatus3) swStatus3.textContent = t('swarmComplete');
-            swarmEl3.insertAdjacentHTML('beforeend', '<div class="swarm-footer">\u2714 ' + t('swarmComplete') + '</div>');
-          }
-          scrollToBottom();
-          break;
-        }
-        case 'swarm_error': {
-          var swarmEl4 = document.getElementById('swarm-' + msg.planId);
-          if (swarmEl4) {
-            swarmEl4.className = 'swarm-card failed';
-            var swStatus4 = swarmEl4.querySelector('.swarm-status');
-            if (swStatus4) swStatus4.textContent = t('swarmFailed');
-            swarmEl4.insertAdjacentHTML('beforeend', '<div class="swarm-footer">\u2718 ' + esc(msg.message || '') + '</div>');
-          }
-          scrollToBottom();
-          break;
-        }
       }
     }
 
@@ -3769,41 +3599,6 @@
               container.appendChild(soulCardEl);
             }
           }
-          // Render saved swarm cards
-          if (m.swarms && m.swarms.length > 0) {
-            for (var swi = 0; swi < m.swarms.length; swi++) {
-              var swd = m.swarms[swi];
-              var swarmCardEl = document.createElement('div');
-              swarmCardEl.className = 'swarm-card ' + (swd.status || 'completed');
-              var swStatusLabel = swd.status === 'completed' ? t('swarmComplete') :
-                                 swd.status === 'failed' ? t('swarmFailed') :
-                                 swd.status === 'executing' ? t('swarmExecuting') :
-                                 (swd.tasks ? swd.tasks.length : 0) + ' ' + t('swarmTasks');
-              var swarmHtml = '<div class="swarm-header">' +
-                '<span class="swarm-title">' + t('swarmTitle') + ': ' + esc(swd.goal || '').slice(0, 80) + '</span>' +
-                '<span class="swarm-status">' + swStatusLabel + '</span>' +
-              '</div><div class="swarm-tasks">';
-              if (swd.tasks) {
-                for (var swti = 0; swti < swd.tasks.length; swti++) {
-                  var swt = swd.tasks[swti];
-                  var swtStatus = swt.status || 'pending';
-                  var swtIdText = swtStatus === 'completed' ? '\u2713' : swtStatus === 'failed' ? '\u2717' : swt.id;
-                  swarmHtml += '<div class="swarm-task ' + swtStatus + '">' +
-                    '<div class="swarm-task-header"><div class="swarm-task-id">' + swtIdText + '</div>' +
-                    '<span class="swarm-task-name">' + esc(swt.name || '') + '</span></div>' +
-                    '<div class="swarm-task-desc">' + esc(swt.description || '').slice(0, 80) + '</div></div>';
-                }
-              }
-              swarmHtml += '</div>';
-              if (swd.status === 'completed') {
-                swarmHtml += '<div class="swarm-footer">\u2714 ' + t('swarmComplete') + '</div>';
-              } else if (swd.status === 'failed') {
-                swarmHtml += '<div class="swarm-footer">\u2718 ' + esc(swd.error || t('swarmFailed')) + '</div>';
-              }
-              swarmCardEl.innerHTML = swarmHtml;
-              container.appendChild(swarmCardEl);
-            }
-          }
           // Render any unrendered images (skip stripped ones with empty data)
           if (m.images && m.images.length > 0) {
             for (var ii = 0; ii < m.images.length; ii++) {
@@ -3928,17 +3723,18 @@
       var baseURLInput = document.getElementById('setBaseURL');
       var modelInput = document.getElementById('setModel');
 
-      // Fill baseURL
+      // Fill baseURL - only show field for custom, but preserve user input
       if (preset.value === 'custom') {
         baseURLField.style.display = '';
-        baseURLInput.value = '';
-        baseURLInput.placeholder = 'https://your-api-endpoint/v1';
+        // Keep user's value if they had one, only clear if empty
+        if (!baseURLInput.value) {
+          baseURLInput.placeholder = 'https://your-api-endpoint/v1';
+        }
       } else if (preset.baseURL) {
         baseURLField.style.display = 'none';
-        baseURLInput.value = preset.baseURL;
+        // Don't override: preset.baseURL will be used at save time
       } else {
         baseURLField.style.display = 'none';
-        baseURLInput.value = '';
       }
 
       // API Key visibility
@@ -4179,7 +3975,6 @@
       if (model) config.model = model;
       var maxTokens = parseInt(document.getElementById('setMaxTokens').value);
       if (maxTokens > 0) config.maxTokens = maxTokens;
-      else config.maxTokens = 8192;
       var systemPrompt = document.getElementById('setSystemPrompt').value.trim();
       if (systemPrompt) config.systemPrompt = systemPrompt;
       var mcpText = document.getElementById('setMCP').value.trim();

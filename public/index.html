@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0a0a0b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PIweb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
   <title>PIweb</title>
   <style>
     :root {
@@ -46,7 +54,7 @@
     [data-theme="light"] .message.assistant strong { color: #1a1a1e; }
     [data-theme="light"] .img-preview-remove { background: rgba(0,0,0,0.5); }
     * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
-    html, body { height: 100%; }
+    html { height: 100%; overflow: hidden; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
       background: var(--bg);
@@ -54,6 +62,10 @@
       display: flex;
       height: 100dvh;
       overflow: hidden;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
       -webkit-font-smoothing: antialiased;
       visibility: hidden;
     }
@@ -188,6 +200,34 @@
       justify-content: center;
     }
     .del-btn:hover, .del-btn:active { color: var(--red); background: rgba(239,68,68,0.1); }
+
+    /* Archive section */
+    .archive-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      margin-top: 4px;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 12px;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition);
+      user-select: none;
+    }
+    .archive-toggle:hover { background: var(--surface2); color: var(--text2); }
+    .archive-toggle svg { transition: transform 0.2s ease; }
+    .archive-toggle.open svg { transform: rotate(90deg); }
+    .archive-list { display: none; }
+    .archive-list.open { display: block; }
+    .session-item.archived {
+      min-height: 36px;
+      padding: 6px 12px;
+      opacity: 0.7;
+    }
+    .session-item.archived .session-title { font-size: 12px; }
+    .session-item.archived .session-meta { font-size: 10px; }
+    .session-item.archived:hover { opacity: 1; }
 
     /* Skills */
     .skills-section { border-top: 1px solid var(--border); padding: 10px; }
@@ -1226,6 +1266,23 @@
       min-width: 44px; min-height: 44px;
     }
     .hamburger:hover, .hamburger:active { background: var(--surface2); }
+    /* PIweb service button states */
+    #piwebServiceBtn { position: relative; }
+    #piwebServiceBtn.svc-running { color: var(--green); border-color: var(--green); }
+    #piwebServiceBtn.svc-stopped { color: var(--red); border-color: var(--red); }
+    #piwebServiceBtn.svc-loading { color: var(--yellow); border-color: var(--yellow); pointer-events: none; }
+    #piwebServiceBtn.svc-loading svg { animation: spin 0.8s linear infinite; }
+    #piwebServiceBtn::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+    }
+    #piwebServiceBtn.svc-running::after { background: var(--green); }
+    #piwebServiceBtn.svc-stopped::after { background: var(--red); }
+    #piwebServiceBtn.svc-loading::after { background: var(--yellow); }
     /* Timer bar — floating top-right in main area */
     .timer-bar {
       display: none;
@@ -1609,7 +1666,7 @@
         </div>
         <div class="settings-field" id="baseURLField">
           <label>Base URL</label>
-          <input id="setBaseURL" type="text" placeholder="e.g. http://192.168.31.11:8000/v1">
+          <input id="setBaseURL" type="text" placeholder="e.g. http://localhost:8000/v1">
         </div>
         <div class="settings-field" id="apiKeyField">
           <label>API Key</label>
@@ -1621,11 +1678,11 @@
           </div>
           <div id="keyStatus" style="font-size:11px;margin-top:4px;color:var(--text3)"></div>
         </div>
-        <div class="settings-field">
+        <div class="settings-field" id="modelField">
           <label>Model</label>
           <input id="setModel" type="text" placeholder="Leave empty for auto-detect">
         </div>
-        <div class="settings-field">
+        <div class="settings-field" id="maxTokensField">
           <label>Max Tokens</label>
           <input id="setMaxTokens" type="number" placeholder="Default: auto">
         </div>
@@ -1634,6 +1691,117 @@
         <div class="settings-section-label">System Prompt</div>
         <div class="settings-field">
           <textarea id="setSystemPrompt" rows="5" placeholder="Custom system prompt (leave empty for default)"></textarea>
+        </div>
+      </div>
+      <!-- Scheduler section hidden — controlled via FunnyPi Plan A/B or piweb.config.json -->
+      <div id="schedulerSection" style="display:none">
+        <select id="setSchedulerMode"><option value="none"></option><option value="performance"></option><option value="custom"></option></select>
+        <input id="schInitInput" type="hidden"><input id="schWorkInput" type="hidden"><input id="schReflectInput" type="hidden"><input id="schCompressInput" type="hidden">
+      </div>
+      <div class="settings-section" id="funnypiPlanSection" style="display:none">
+        <div class="settings-section-label">FunnyPi Plan</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label class="funnypi-plan-card" id="planCardA" onclick="selectFunnyPiPlan('performance')" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:12px;border:2px solid var(--border);border-radius:var(--radius-sm);transition:var(--transition)">
+            <input type="radio" name="funnypiPlan" value="performance" style="margin-top:1px" checked>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:13px">Plan A</div>
+              <div style="font-size:11px;color:var(--text2)">Quality first, best results</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <!-- Independent Reflect Endpoint -->
+      <div class="settings-section" id="reflectEndpointSection">
+        <div class="settings-section-header" style="cursor:pointer" onclick="toggleReflectEndpoint()">
+          <div class="settings-section-label" id="reflectEndpointLabel"></div>
+          <label class="toggle-switch" style="margin-left:auto">
+            <input type="checkbox" id="reflectEndpointEnabled" onchange="onReflectEndpointToggle()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div id="reflectEndpointFields" style="display:none">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px" id="reflectEndpointDesc"></div>
+          <div class="settings-field">
+            <label id="reflectModeLabel">配置模式</label>
+            <select id="reflectMode" onchange="onReflectModeChange()">
+              <option value="local">本地模型 (仅需地址+模型)</option>
+              <option value="cloud">云端API (需完整配置)</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label>Base URL</label>
+            <input id="reflectBaseURL" type="text" placeholder="http://localhost:8000/v1">
+          </div>
+          <div id="reflectCloudFields" style="display:none">
+            <div class="settings-field">
+              <label id="reflectProviderLabel">API 格式</label>
+              <select id="reflectProvider" onchange="onReflectProviderChange()">
+                <option value="openai">OpenAI Compatible</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+              </select>
+            </div>
+            <div class="settings-field">
+              <label>API Key</label>
+              <input id="reflectApiKey" type="password" placeholder="sk-...">
+            </div>
+          </div>
+          <div class="settings-field">
+            <label id="reflectModelLabel">模型名</label>
+            <input id="reflectModel" type="text" placeholder="e.g. deepseek-chat, glm-5">
+          </div>
+          <!-- Draft Guide Toggle -->
+          <div class="settings-field" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+              <span>
+                <span id="draftGuideLabel" style="font-size:13px;font-weight:500"></span>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px" id="draftGuideDesc"></div>
+              </span>
+              <label class="toggle-switch" style="margin-left:12px;flex-shrink:0">
+                <input type="checkbox" id="draftGuideEnabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Independent Vision Endpoint -->
+      <div class="settings-section" id="visionEndpointSection">
+        <div class="settings-section-header" style="cursor:pointer" onclick="toggleVisionEndpoint()">
+          <div class="settings-section-label" id="visionEndpointLabel"></div>
+          <label class="toggle-switch" style="margin-left:auto">
+            <input type="checkbox" id="visionEndpointEnabled" onchange="onVisionEndpointToggle()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div id="visionEndpointFields" style="display:none">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px" id="visionEndpointDesc"></div>
+          <div class="settings-field">
+            <label id="visionModeLabel"></label>
+            <select id="visionMode" onchange="onVisionModeChange()">
+              <option value="auto">OpenRouter Auto</option>
+              <option value="local">Local Model</option>
+              <option value="cloud">Cloud API</option>
+            </select>
+          </div>
+          <div class="settings-field" id="visionApiKeyField">
+            <label>API Key</label>
+            <input id="visionApiKey" type="password" placeholder="sk-or-v1-...">
+          </div>
+          <div class="settings-field" id="visionBaseURLField" style="display:none">
+            <label>Base URL</label>
+            <input id="visionBaseURL" type="text" placeholder="http://localhost:8000/v1">
+          </div>
+          <div class="settings-field" id="visionProviderField" style="display:none">
+            <label id="visionProviderLabel">API Format</label>
+            <select id="visionProvider" onchange="onVisionProviderChange()">
+              <option value="openai">OpenAI Compatible</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+            </select>
+          </div>
+          <div class="settings-field" id="visionModelField" style="display:none">
+            <label id="visionModelLabel"></label>
+            <input id="visionModel" type="text" placeholder="e.g. InternVL3-8B, Qwen-VL">
+          </div>
         </div>
       </div>
       <div class="settings-section">
@@ -1690,6 +1858,9 @@
         <svg width="28" height="28" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="url(#piweb-bg)"/><text x="256" y="340" font-family="'Arial Black',sans-serif" font-size="320" font-weight="900" fill="url(#piweb-txt)" text-anchor="middle">Pi</text></svg>
         <span class="sidebar-logo-text">PIweb</span>
       </span>
+      <button class="icon-btn" id="piwebServiceBtn" onclick="togglePiwebService()" title="PIweb Service" style="position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </button>
       <button class="icon-btn" id="wifiBtn" onclick="openWiFi()" title="WiFi" style="position:relative">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
       </button>
@@ -1718,6 +1889,9 @@
         <span class="sidebar-logo-text">PIweb</span>
       </span>
       <span style="flex:1"></span>
+      <button class="icon-btn" id="piwebServiceBtnMobile" onclick="togglePiwebService()" title="PIweb Service" style="min-width:32px;min-height:32px;padding:4px;position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      </button>
       <button class="icon-btn" id="wifiBtnMobile" onclick="openWiFi()" title="WiFi" style="min-width:32px;min-height:32px;padding:4px;position:relative">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>
       </button>
@@ -1858,6 +2032,54 @@
     // ===== Timer Dialog — simplified chain mode =====
     var _timerSelectedInterval = 0;
     var _timerSelectedCount = 0;
+
+    
+    // PIweb service control via systemctl
+    var _svcStatus = 'unknown';
+
+    function updateSvcBtn(status) {
+      _svcStatus = status;
+      var ids = ['piwebServiceBtn', 'piwebServiceBtnMobile'];
+      ids.forEach(function(id) {
+        var btn = document.getElementById(id);
+        if (!btn) return;
+        btn.className = 'icon-btn' + (status === 'running' ? ' svc-running' : status === 'stopped' ? ' svc-stopped' : ' svc-loading');
+        btn.title = status === 'running' ? 'PIweb running (click to restart)' : status === 'stopped' ? 'PIweb stopped (click to start)' : 'Loading...';
+      });
+    }
+
+    function checkSvcStatus() {
+      fetch('/api/service/status').then(function(r) { return r.json(); }).then(function(d) {
+        updateSvcBtn(d.active ? 'running' : 'stopped');
+      }).catch(function() { updateSvcBtn('unknown'); });
+    }
+
+    function togglePiwebService() {
+      if (_svcStatus === 'running') {
+        var msg = currentLang === 'zh' ? 'Restart PIweb service?' : 'Restart PIweb service?';
+        if (!confirm(msg)) return;
+        updateSvcBtn('loading');
+        fetch('/api/service/restart', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            showToast(d.success ? 'Restarting...' : (d.error || 'Failed'));
+            setTimeout(checkSvcStatus, 3000);
+          }).catch(function(e) { showToast('Error: ' + e); updateSvcBtn('unknown'); });
+      } else {
+        var msg2 = currentLang === 'zh' ? 'Start PIweb service?' : 'Start PIweb service?';
+        if (!confirm(msg2)) return;
+        updateSvcBtn('loading');
+        fetch('/api/service/start', { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            showToast(d.success ? 'PIweb started' : (d.error || 'Failed'));
+            setTimeout(checkSvcStatus, 3000);
+          }).catch(function(e) { showToast('Error: ' + e); updateSvcBtn('unknown'); });
+      }
+    }
+
+    checkSvcStatus();
+    setInterval(checkSvcStatus, 30000);
 
     function openTimerDialog() {
       document.getElementById('timerDialogOverlay').classList.add('open');
@@ -2012,14 +2234,14 @@
         saveFailed: '保存失败: ',
         mcpToggleFailed: 'MCP 切换失败: ',
         mcpStarted: 'MCP 已启动', mcpStopped: 'MCP 已停止',
-        msgs: ' 条消息', active: '已启用', off: '关闭',
+        msgs: ' 条消息', active: '已启用', off: '关闭', archive: '历史存档',
         switchedTo: '已切换: ', notFound: '未找到: ',
         toggleVis: '显示/隐藏',
         editJson: '编辑 JSON (高级)',
         leaveEmpty: '留空自动检测',
         defaultMaxTokens: '默认: auto',
         customSysPrompt: '自定义系统提示词 (留空使用默认)',
-        localDeploy: '本地部署', domesticSvc: '国内服务',
+        funnyPiGroup: 'FunnyPi', localDeploy: '本地部署', domesticSvc: '国内服务',
         intlSvc: '国际服务', otherGroup: '其他',
         tools: ' 工具', gridLabel: 'Grid', stepLabel: '步骤',
         gridPlanning: '正在规划...', gridPlanTitle: '执行计划', gridStepOf: '步骤', gridSkillGap: '缺失技能', gridComplete: '已完成', gridFailed: '失败', gridExecuting: '执行中',
@@ -2034,7 +2256,20 @@
         dropHere: '拖放文件到这里',
         uploadAttach: '上传附件',
         uploading: '上传中...',
-        fileBlocked: '不允许的文件类型'
+        fileBlocked: '不允许的文件类型',
+        reflectEndpoint: '回溯模型 (独立配置)',
+        reflectEndpointDesc: '启用后，回溯纠错阶段将使用独立的模型。本地模式只需填地址和模型名，云端模式需完整配置。',
+        reflectModeLabel: '配置模式',
+        reflectProviderLabel: 'API 格式',
+        reflectModelLabel: '模型名',
+        draftGuideLabel: '策略引导 (Draft Guide)',
+        draftGuideDesc: '每轮对话前，回溯模型先生成简短策略指引，帮助工作模型更好地处理请求。',
+        visionEndpoint: '视觉模型 (独立配置)',
+        visionEndpointDesc: '启用后，图片将先发给独立的视觉模型分析，再将文字描述传给主模型。关闭则图片直接发给主模型。',
+        visionAutoDesc: 'OpenRouter Auto: 只需填写 API Key，自动使用免费视觉模型，失败自动切换下一个。',
+        visionModeLabel: '配置模式',
+        visionProviderLabel: 'API 格式',
+        visionModelLabel: '模型名'
       },
       en: {
         settings: 'Settings', cancel: 'Cancel', save: 'Save',
@@ -2070,14 +2305,14 @@
         saveFailed: 'Save failed: ',
         mcpToggleFailed: 'MCP toggle failed: ',
         mcpStarted: 'MCP started', mcpStopped: 'MCP stopped',
-        msgs: ' msgs', active: 'Active', off: 'Off',
+        msgs: ' msgs', active: 'Active', off: 'Off', archive: 'Archive',
         switchedTo: 'Switched: ', notFound: 'Not found: ',
         toggleVis: 'Toggle visibility',
         editJson: 'Edit JSON (advanced)',
         leaveEmpty: 'Leave empty for auto-detect',
         defaultMaxTokens: 'Default: auto',
         customSysPrompt: 'Custom system prompt (leave empty for default)',
-        localDeploy: 'Local Deploy', domesticSvc: 'Chinese Services',
+        funnyPiGroup: 'FunnyPi', localDeploy: 'Local Deploy', domesticSvc: 'Chinese Services',
         intlSvc: 'International Services', otherGroup: 'Other',
         tools: ' tools', gridLabel: 'Grid', stepLabel: 'Step',
         gridPlanning: 'Planning...', gridPlanTitle: 'Execution Plan', gridStepOf: 'Step', gridSkillGap: 'Missing Skills', gridComplete: 'Complete', gridFailed: 'Failed', gridExecuting: 'Executing',
@@ -2092,7 +2327,20 @@
         dropHere: 'Drop files here',
         uploadAttach: 'Upload attachment',
         uploading: 'Uploading...',
-        fileBlocked: 'File type not allowed'
+        fileBlocked: 'File type not allowed',
+        reflectEndpoint: 'Reflect Model (Independent)',
+        reflectEndpointDesc: 'When enabled, uses a separate model for reflection. Local mode needs only baseURL + model, cloud mode needs full config.',
+        reflectModeLabel: 'Mode',
+        reflectProviderLabel: 'API Format',
+        reflectModelLabel: 'Model',
+        draftGuideLabel: 'Draft Guide',
+        draftGuideDesc: 'Before each turn, the reflect model generates brief strategy guidance for the worker model.',
+        visionEndpoint: 'Vision Model (Independent)',
+        visionEndpointDesc: 'When enabled, images are analyzed by a separate vision model first, then text description is sent to the main model.',
+        visionAutoDesc: 'OpenRouter Auto: just enter your API Key, automatically uses free vision models with failover.',
+        visionModeLabel: 'Mode',
+        visionProviderLabel: 'API Format',
+        visionModelLabel: 'Model'
       }
     };
 
@@ -2334,7 +2582,7 @@
             currentAssistantText = '';
           }
           currentAssistantText += (msg.text || '');
-          currentAssistantContentEl.textContent = currentAssistantText;
+          currentAssistantContentEl.textContent = stripLeakedXML(currentAssistantText);
           scrollToBottom();
           break;
 
@@ -2662,7 +2910,7 @@
             activeToolCards[atKey] = atCard;
           }
 
-          // 4. Render grid/soul/swarm cards (reuse existing rendering from renderSessionMessages format)
+          // 4. Render grid/soul cards (reuse existing rendering from renderSessionMessages format)
           if (msg.grids) {
             for (var sgi = 0; sgi < msg.grids.length; sgi++) {
               var sgd = msg.grids[sgi];
@@ -2751,7 +2999,7 @@
             currentAssistantText = msg.accumulatedText;
             if (msg.runStatus === 'running') {
               // Still streaming — render as plain text (will be updated by future token events)
-              currentAssistantContentEl.textContent = currentAssistantText;
+              currentAssistantContentEl.textContent = stripLeakedXML(currentAssistantText);
             } else {
               // Run finished — render as markdown
               currentAssistantContentEl.innerHTML = renderMarkdown(currentAssistantText);
@@ -3106,6 +3354,7 @@
           scrollToBottom();
           break;
         }
+
       }
     }
 
@@ -3154,22 +3403,62 @@
     function renderSessions(sessions) {
       var el = document.getElementById('sessionList');
       if (!Array.isArray(sessions)) sessions = [];
-      var newHtml = sessions.filter(function(s) { return s && s.id; }).map(function(s) {
-        var msgCount = s.messageCount != null ? s.messageCount : ((s.messages && Array.isArray(s.messages)) ? s.messages.length : 0);
+      var valid = sessions.filter(function(s) { return s && s.id; });
+      var recent = valid.filter(function(s) { return !s.archived; });
+      var archived = valid.filter(function(s) { return s.archived; });
+
+      // Render recent sessions
+      var recentHtml = recent.map(function(s) {
+        var msgCount = s.messageCount != null ? s.messageCount : 0;
         return '<div class="session-item-wrap">' +
           '<div class="session-item ' + (s.id === currentSessionId ? 'active' : '') + '" data-sid="' + esc(s.id) + '">' +
             '<div style="overflow:hidden;flex:1">' +
               '<div class="session-title">' + esc(s.title || 'Untitled') + '</div>' +
               '<div class="session-meta">' + msgCount + t('msgs') + '</div>' +
             '</div>' +
-            '<button class="del-btn" title="Delete">×</button>' +
+            '<button class="del-btn" title="Delete">\u00d7</button>' +
           '</div>' +
         '</div>';
       }).join('');
-      // Only update DOM if content changed
+
+      // Render archive section if there are archived sessions
+      var archiveHtml = '';
+      if (archived.length > 0) {
+        var wasOpen = el.querySelector('.archive-toggle.open') !== null;
+        archiveHtml = '<div class="archive-toggle' + (wasOpen ? ' open' : '') + '" id="archiveToggle">' +
+          '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M4 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' +
+          '<span>' + t('archive') + ' (' + archived.length + ')</span>' +
+        '</div>' +
+        '<div class="archive-list' + (wasOpen ? ' open' : '') + '" id="archiveList">' +
+        archived.map(function(s) {
+          var msgCount = s.messageCount != null ? s.messageCount : 0;
+          var dateStr = s.updatedAt ? new Date(s.updatedAt).toLocaleDateString() : '';
+          return '<div class="session-item-wrap">' +
+            '<div class="session-item archived' + (s.id === currentSessionId ? ' active' : '') + '" data-sid="' + esc(s.id) + '" title="' + esc(s.preview || '') + '">' +
+              '<div style="overflow:hidden;flex:1">' +
+                '<div class="session-title">' + esc(s.title || 'Untitled') + '</div>' +
+                '<div class="session-meta">' + msgCount + t('msgs') + ' \u00b7 ' + dateStr + '</div>' +
+              '</div>' +
+              '<button class="del-btn" title="Delete">\u00d7</button>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+        '</div>';
+      }
+
+      var newHtml = recentHtml + archiveHtml;
       if (el.innerHTML !== newHtml) {
         el.innerHTML = newHtml;
         initSwipeDelete();
+        // Archive toggle click handler
+        var toggle = document.getElementById('archiveToggle');
+        if (toggle) {
+          toggle.addEventListener('click', function() {
+            toggle.classList.toggle('open');
+            var list = document.getElementById('archiveList');
+            if (list) list.classList.toggle('open');
+          });
+        }
       }
     }
 
@@ -3522,6 +3811,8 @@
 
     // ===== Provider Presets =====
     var PROVIDERS = [
+      { group: 'funnyPiGroup' },
+      { name: 'FunnyPi (智能调度)', value: 'funnypi', type: 'openai', baseURL: 'https://funnypi.com/proxy/v1', models: '' },
       { group: 'localDeploy' },
       { name: 'Local (Ollama)', value: 'ollama', type: 'openai', baseURL: 'http://localhost:11434/v1', models: 'llama3.3, qwen2.5, deepseek-r1', noKey: true },
       { name: 'Local (vLLM/SGLang)', value: 'vllm', type: 'openai', baseURL: 'http://localhost:8000/v1', models: 'auto-detect', noKey: true },
@@ -3590,7 +3881,7 @@
       return 'custom';
     }
 
-    function onProviderChange() {
+    function onProviderChange(skipValueUpdate) {
       var sel = document.getElementById('setProvider');
       var preset = getPreset(sel.value);
       if (!preset) return;
@@ -3599,18 +3890,37 @@
       var apiKeyField = document.getElementById('apiKeyField');
       var baseURLInput = document.getElementById('setBaseURL');
       var modelInput = document.getElementById('setModel');
+      var modelField = document.getElementById('modelField');
+      var maxTokensField = document.getElementById('maxTokensField');
+      var funnypiPlanSection = document.getElementById('funnypiPlanSection');
+      var isFunnyPi = preset.value === 'funnypi';
 
-      // Fill baseURL
+      // FunnyPi mode: hide model/maxTokens, show plan A/B
+      if (isFunnyPi) {
+        baseURLField.style.display = 'none';
+        if (!skipValueUpdate) baseURLInput.value = preset.baseURL;
+        apiKeyField.style.display = '';
+        modelField.style.display = 'none';
+        maxTokensField.style.display = 'none';
+        funnypiPlanSection.style.display = '';
+        return;
+      }
+
+      // Non-FunnyPi: restore normal fields
+      modelField.style.display = '';
+      maxTokensField.style.display = '';
+      funnypiPlanSection.style.display = 'none';
+
+      // Fill baseURL - auto-populate preset default value only if user switched provider
       if (preset.value === 'custom') {
         baseURLField.style.display = '';
-        baseURLInput.value = '';
+        if (!skipValueUpdate) baseURLInput.value = '';
         baseURLInput.placeholder = 'https://your-api-endpoint/v1';
       } else if (preset.baseURL) {
-        baseURLField.style.display = 'none';
-        baseURLInput.value = preset.baseURL;
+        baseURLField.style.display = '';
+        if (!skipValueUpdate) baseURLInput.value = preset.baseURL;
       } else {
         baseURLField.style.display = 'none';
-        baseURLInput.value = '';
       }
 
       // API Key visibility
@@ -3626,6 +3936,289 @@
       } else {
         modelInput.placeholder = 'Leave empty for auto-detect';
       }
+    }
+
+    function selectFunnyPiPlan(mode) {
+      var radios = document.querySelectorAll('input[name="funnypiPlan"]');
+      for (var i = 0; i < radios.length; i++) {
+        radios[i].checked = (radios[i].value === mode);
+      }
+      // Visual highlight
+      document.getElementById('planCardA').style.borderColor = mode === 'performance' ? 'var(--accent)' : 'var(--border)';
+    }
+
+    // ===== Scheduler =====
+
+    function onSchedulerModeChange() {
+      // No-op: scheduler UI is hidden, controlled via FunnyPi Plan A/B or config file
+    }
+
+    function loadSchedulerUI(config) {
+      var sch = config.scheduler;
+      var mode = (sch && sch.mode) ? sch.mode : 'none';
+      document.getElementById('setSchedulerMode').value = mode;
+
+      // Fill custom inputs if available
+      if (sch && sch.models) {
+        document.getElementById('schInitInput').value = sch.models.init || '';
+        document.getElementById('schWorkInput').value = sch.models.work || '';
+        document.getElementById('schReflectInput').value = sch.models.reflect || '';
+        document.getElementById('schCompressInput').value = sch.models.compress || '';
+      } else {
+        document.getElementById('schInitInput').value = '';
+        document.getElementById('schWorkInput').value = '';
+        document.getElementById('schReflectInput').value = '';
+        document.getElementById('schCompressInput').value = '';
+      }
+
+      // FunnyPi plan A/B — sync radio from scheduler mode
+      if (mode === 'performance') {
+        selectFunnyPiPlan(mode);
+      } else {
+        selectFunnyPiPlan('performance'); // default to A
+      }
+
+      onSchedulerModeChange();
+    }
+
+    function buildSchedulerConfig() {
+      var mode = document.getElementById('setSchedulerMode').value;
+      if (mode === 'none') return { mode: 'none' };
+      if (mode === 'custom') {
+        return {
+          mode: 'custom',
+          models: {
+            init: document.getElementById('schInitInput').value.trim() || '',
+            work: document.getElementById('schWorkInput').value.trim() || '',
+            reflect: document.getElementById('schReflectInput').value.trim() || '',
+            compress: document.getElementById('schCompressInput').value.trim() || ''
+          }
+        };
+      }
+      // performance mode — just the mode, server uses its preset
+      return { mode: mode };
+    }
+
+    // ===== Reflect Endpoint =====
+    function toggleReflectEndpoint() {
+      var cb = document.getElementById('reflectEndpointEnabled');
+      cb.checked = !cb.checked;
+      onReflectEndpointToggle();
+    }
+
+    function onReflectEndpointToggle() {
+      var enabled = document.getElementById('reflectEndpointEnabled').checked;
+      document.getElementById('reflectEndpointFields').style.display = enabled ? '' : 'none';
+      if (enabled) onReflectModeChange();
+    }
+
+    function onReflectModeChange() {
+      var mode = document.getElementById('reflectMode').value;
+      var cloudFields = document.getElementById('reflectCloudFields');
+      cloudFields.style.display = mode === 'cloud' ? '' : 'none';
+    }
+
+    function onReflectProviderChange() {
+      var provider = document.getElementById('reflectProvider').value;
+      var urlInput = document.getElementById('reflectBaseURL');
+      if (provider === 'anthropic') {
+        urlInput.placeholder = '(Required) e.g., https://api.anthropic.com';
+      } else {
+        urlInput.placeholder = '(Required) e.g., https://api.openai.com/v1';
+      }
+      // Only keep placeholder, don't override user's saved value
+    }
+
+    function loadReflectEndpointUI(config) {
+      var ep = config.scheduler && config.scheduler.reflectEndpoint;
+      var enabled = ep && ep.enabled;
+      document.getElementById('reflectEndpointEnabled').checked = !!enabled;
+      document.getElementById('reflectEndpointFields').style.display = enabled ? '' : 'none';
+      if (ep) {
+        var mode = (ep.apiKey && ep.apiKey.trim()) ? 'cloud' : 'local';
+        document.getElementById('reflectMode').value = mode;
+        document.getElementById('reflectProvider').value = ep.provider || 'openai';
+        document.getElementById('reflectBaseURL').value = ep.baseURL || '';
+        document.getElementById('reflectApiKey').value = ep.apiKey || '';
+        document.getElementById('reflectModel').value = ep.model || '';
+        document.getElementById('draftGuideEnabled').checked = !!ep.draftGuide;
+        onReflectModeChange();
+      } else {
+        document.getElementById('reflectMode').value = 'local';
+        document.getElementById('reflectProvider').value = 'openai';
+        document.getElementById('reflectBaseURL').value = '';
+        document.getElementById('reflectApiKey').value = '';
+        document.getElementById('reflectModel').value = '';
+        document.getElementById('draftGuideEnabled').checked = false;
+        onReflectModeChange();
+      }
+    }
+
+    function buildReflectEndpointConfig() {
+      var enabled = document.getElementById('reflectEndpointEnabled').checked;
+      if (!enabled) return undefined;
+      var model = document.getElementById('reflectModel').value.trim();
+      var baseURL = document.getElementById('reflectBaseURL').value.trim();
+      if (!model || !baseURL) return undefined;
+
+      var mode = document.getElementById('reflectMode').value;
+      var draftGuide = document.getElementById('draftGuideEnabled').checked;
+      if (mode === 'local') {
+        return {
+          enabled: true,
+          provider: 'openai',
+          baseURL: baseURL,
+          apiKey: '',
+          model: model,
+          draftGuide: draftGuide
+        };
+      } else {
+        return {
+          enabled: true,
+          provider: document.getElementById('reflectProvider').value,
+          baseURL: baseURL,
+          apiKey: document.getElementById('reflectApiKey').value.trim(),
+          model: model,
+          draftGuide: draftGuide
+        };
+      }
+    }
+
+    function updateReflectEndpointLabels() {
+      var el = document.getElementById('reflectEndpointLabel');
+      if (el) el.textContent = t('reflectEndpoint');
+      var desc = document.getElementById('reflectEndpointDesc');
+      if (desc) desc.textContent = t('reflectEndpointDesc');
+      var modeLabel = document.getElementById('reflectModeLabel');
+      if (modeLabel) modeLabel.textContent = t('reflectModeLabel');
+      var provLabel = document.getElementById('reflectProviderLabel');
+      if (provLabel) provLabel.textContent = t('reflectProviderLabel');
+      var mdlLabel = document.getElementById('reflectModelLabel');
+      if (mdlLabel) mdlLabel.textContent = t('reflectModelLabel');
+      var dgLabel = document.getElementById('draftGuideLabel');
+      if (dgLabel) dgLabel.textContent = t('draftGuideLabel');
+      var dgDesc = document.getElementById('draftGuideDesc');
+      if (dgDesc) dgDesc.textContent = t('draftGuideDesc');
+    }
+
+    // ===== Vision Endpoint =====
+    function toggleVisionEndpoint() {
+      var cb = document.getElementById('visionEndpointEnabled');
+      cb.checked = !cb.checked;
+      onVisionEndpointToggle();
+    }
+
+    function onVisionEndpointToggle() {
+      var enabled = document.getElementById('visionEndpointEnabled').checked;
+      document.getElementById('visionEndpointFields').style.display = enabled ? '' : 'none';
+      if (enabled) onVisionModeChange();
+    }
+
+    function onVisionModeChange() {
+      var mode = document.getElementById('visionMode').value;
+      var keyField = document.getElementById('visionApiKeyField');
+      var urlField = document.getElementById('visionBaseURLField');
+      var provField = document.getElementById('visionProviderField');
+      var mdlField = document.getElementById('visionModelField');
+      var descEl = document.getElementById('visionEndpointDesc');
+      if (mode === 'auto') {
+        keyField.style.display = '';
+        urlField.style.display = 'none';
+        provField.style.display = 'none';
+        mdlField.style.display = 'none';
+        if (descEl) descEl.textContent = t('visionAutoDesc');
+      } else if (mode === 'local') {
+        keyField.style.display = 'none';
+        urlField.style.display = '';
+        provField.style.display = 'none';
+        mdlField.style.display = '';
+        if (descEl) descEl.textContent = t('visionEndpointDesc');
+      } else {
+        keyField.style.display = '';
+        urlField.style.display = '';
+        provField.style.display = '';
+        mdlField.style.display = '';
+        if (descEl) descEl.textContent = t('visionEndpointDesc');
+      }
+    }
+
+    function onVisionProviderChange() {
+      var provider = document.getElementById('visionProvider').value;
+      var urlInput = document.getElementById('visionBaseURL');
+      if (provider === 'anthropic') {
+        urlInput.placeholder = '(Required) e.g., https://api.anthropic.com';
+      } else {
+        urlInput.placeholder = '(Required) e.g., http://localhost:8000/v1';
+      }
+    }
+
+    function loadVisionEndpointUI(config) {
+      var ep = config.visionEndpoint;
+      var enabled = ep && ep.enabled;
+      document.getElementById('visionEndpointEnabled').checked = !!enabled;
+      document.getElementById('visionEndpointFields').style.display = enabled ? '' : 'none';
+      if (ep) {
+        var mode = ep.mode === 'auto' ? 'auto' : ((ep.apiKey && ep.apiKey.trim()) ? 'cloud' : 'local');
+        document.getElementById('visionMode').value = mode;
+        document.getElementById('visionProvider').value = ep.provider || 'openai';
+        document.getElementById('visionBaseURL').value = ep.baseURL || '';
+        document.getElementById('visionApiKey').value = ep.apiKey || '';
+        document.getElementById('visionModel').value = (ep.mode === 'auto' ? '' : ep.model) || '';
+        onVisionModeChange();
+      } else {
+        document.getElementById('visionMode').value = 'auto';
+        document.getElementById('visionProvider').value = 'openai';
+        document.getElementById('visionBaseURL').value = '';
+        document.getElementById('visionApiKey').value = '';
+        document.getElementById('visionModel').value = '';
+        onVisionModeChange();
+      }
+    }
+
+    function buildVisionEndpointConfig() {
+      var enabled = document.getElementById('visionEndpointEnabled').checked;
+      if (!enabled) return undefined;
+      var mode = document.getElementById('visionMode').value;
+      if (mode === 'auto') {
+        var key = document.getElementById('visionApiKey').value.trim();
+        if (!key) return undefined;
+        return {
+          enabled: true, mode: 'auto',
+          provider: 'openai',
+          baseURL: 'https://openrouter.ai/api/v1',
+          apiKey: key, model: 'auto'
+        };
+      }
+      var model = document.getElementById('visionModel').value.trim();
+      var baseURL = document.getElementById('visionBaseURL').value.trim();
+      if (!model || !baseURL) return undefined;
+      if (mode === 'local') {
+        return {
+          enabled: true, mode: 'manual',
+          provider: 'openai', baseURL: baseURL,
+          apiKey: '', model: model
+        };
+      }
+      return {
+        enabled: true, mode: 'manual',
+        provider: document.getElementById('visionProvider').value,
+        baseURL: baseURL,
+        apiKey: document.getElementById('visionApiKey').value.trim(),
+        model: model
+      };
+    }
+
+    function updateVisionEndpointLabels() {
+      var el = document.getElementById('visionEndpointLabel');
+      if (el) el.textContent = t('visionEndpoint');
+      var desc = document.getElementById('visionEndpointDesc');
+      if (desc) desc.textContent = t('visionEndpointDesc');
+      var modeLabel = document.getElementById('visionModeLabel');
+      if (modeLabel) modeLabel.textContent = t('visionModeLabel');
+      var provLabel = document.getElementById('visionProviderLabel');
+      if (provLabel) provLabel.textContent = t('visionProviderLabel');
+      var mdlLabel = document.getElementById('visionModelLabel');
+      if (mdlLabel) mdlLabel.textContent = t('visionModelLabel');
     }
 
     function toggleKeyVisibility() {
@@ -3656,9 +4249,14 @@
         document.getElementById('setMaxTokens').value = config.maxTokens || '';
         document.getElementById('setSystemPrompt').value = config.systemPrompt || '';
 
-        // API Key
-        _originalApiKey = '';
-        document.getElementById('setApiKey').value = '';
+        // API Key — display saved key value so user can see and edit it
+        if (keyStatus.hasKey && keyStatus.key) {
+          document.getElementById('setApiKey').value = keyStatus.key;
+          _originalApiKey = keyStatus.key;
+        } else {
+          document.getElementById('setApiKey').value = '';
+          _originalApiKey = '';
+        }
         var statusEl = document.getElementById('keyStatus');
         if (keyStatus.hasKey) {
           statusEl.textContent = t('keyConfigured');
@@ -3667,6 +4265,15 @@
           statusEl.textContent = t('noKeyConfigured');
           statusEl.style.color = 'var(--yellow)';
         }
+
+        // Scheduler
+        loadSchedulerUI(config);
+
+        // Reflect endpoint
+        loadReflectEndpointUI(config);
+
+        // Vision endpoint
+        loadVisionEndpointUI(config);
 
         // MCP JSON editor
         try {
@@ -3682,7 +4289,7 @@
         // Skills toggle list
         renderSkillsToggles(allAvailableSkills);
 
-        onProviderChange();
+        onProviderChange(true);  // skipValueUpdate=true on load
         updateSettingsLabels();
         document.getElementById('settingsOverlay').classList.add('open');
         document.getElementById('settingsPanel').classList.add('open');
@@ -3825,6 +4432,8 @@
       if (cancelBtn) cancelBtn.textContent = t('cancel');
       var saveBtn = document.getElementById('saveBtn');
       if (saveBtn) saveBtn.textContent = t('save');
+      updateReflectEndpointLabels();
+      updateVisionEndpointLabels();
     }
 
     function saveSettings() {
@@ -3839,19 +4448,18 @@
       config.preset = presetValue;
       config.provider = preset.type; // 'anthropic' or 'openai'
 
-      // BaseURL: use preset unless custom
-      if (presetValue === 'custom') {
-        var baseURL = document.getElementById('setBaseURL').value.trim();
-        if (baseURL) config.baseURL = baseURL;
+      // BaseURL: always read from input field (preset value is just placeholder)
+      var baseURL = document.getElementById('setBaseURL').value.trim();
+      if (baseURL) {
+        config.baseURL = baseURL;
       } else if (preset.baseURL) {
-        config.baseURL = preset.baseURL;
+        config.baseURL = preset.baseURL;  // fallback to preset only if user didn't fill
       }
 
       var model = document.getElementById('setModel').value.trim();
       if (model) config.model = model;
       var maxTokens = parseInt(document.getElementById('setMaxTokens').value);
       if (maxTokens > 0) config.maxTokens = maxTokens;
-      else config.maxTokens = 8192;
       var systemPrompt = document.getElementById('setSystemPrompt').value.trim();
       if (systemPrompt) config.systemPrompt = systemPrompt;
       var mcpText = document.getElementById('setMCP').value.trim();
@@ -3863,19 +4471,44 @@
         return;
       }
 
-      // Save API key first if changed
+      // Scheduler config — FunnyPi uses plan A/B radio, others disable scheduler
+      // (scheduler section is hidden for non-FunnyPi; stale mode from previous
+      //  FunnyPi config would override user's custom model — bug fix 2026-03-26)
+      if (presetValue === 'funnypi') {
+        var selectedPlan = document.querySelector('input[name="funnypiPlan"]:checked');
+        config.scheduler = { mode: selectedPlan ? selectedPlan.value : 'performance' };
+      } else {
+        config.scheduler = { mode: 'none' };
+      }
+
+      // Attach independent reflect endpoint config (works with any provider/scheduler mode)
+      var reflectEp = buildReflectEndpointConfig();
+      if (reflectEp) {
+        if (!config.scheduler) config.scheduler = { mode: 'none' };
+        config.scheduler.reflectEndpoint = reflectEp;
+      }
+
+      // Attach independent vision endpoint config
+      var visionEp = buildVisionEndpointConfig();
+      if (visionEp) {
+        config.visionEndpoint = visionEp;
+      }
+
+      // API key: always include in config for config.json persistence,
+      // only update .env if the key actually changed
       var apiKeyInput = document.getElementById('setApiKey').value.trim();
       var saveKeyPromise = Promise.resolve();
       if (apiKeyInput) {
-        saveKeyPromise = fetch('/api/apikey', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: apiKeyInput })
-        }).then(function(r) {
-          if (!r.ok) throw new Error('Failed to save API Key');
-          // Pass apiKey to settings so agent picks it up
-          config.apiKey = apiKeyInput;
-        });
+        config.apiKey = apiKeyInput;
+        if (apiKeyInput !== _originalApiKey) {
+          saveKeyPromise = fetch('/api/apikey', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: apiKeyInput })
+          }).then(function(r) {
+            if (!r.ok) throw new Error('Failed to save API Key');
+          });
+        }
       }
 
       saveKeyPromise.then(function() {
@@ -3955,7 +4588,8 @@
     }
 
     function _compressToJpeg(source, origW, origH, closeable) {
-      var maxDim = 1024;
+      var TARGET_BYTES = 64 * 1024; // 64KB target
+      var maxDim = 768;
       var w = origW, h = origH;
       if (w > maxDim || h > maxDim) {
         if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
@@ -3966,9 +4600,32 @@
       canvas.height = h;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(source, 0, 0, w, h);
-      if (closeable && source.close) source.close(); // Free ImageBitmap memory immediately
-      var compressed = canvas.toDataURL('image/jpeg', 0.75);
-      canvas.width = 1; canvas.height = 1; // Free canvas memory
+      if (closeable && source.close) source.close();
+      // Iterative compression: reduce quality until under 64KB
+      var quality = 0.7;
+      var compressed = canvas.toDataURL('image/jpeg', quality);
+      var b64Len = compressed.length - compressed.indexOf(',') - 1;
+      var rawBytes = Math.round(b64Len * 3 / 4);
+      while (rawBytes > TARGET_BYTES && quality > 0.15) {
+        quality -= 0.1;
+        compressed = canvas.toDataURL('image/jpeg', quality);
+        b64Len = compressed.length - compressed.indexOf(',') - 1;
+        rawBytes = Math.round(b64Len * 3 / 4);
+      }
+      // Still too large: scale down by redrawing canvas onto itself
+      if (rawBytes > TARGET_BYTES) {
+        var scale = Math.sqrt(TARGET_BYTES / rawBytes) * 0.9;
+        var nw = Math.max(Math.round(w * scale), 64);
+        var nh = Math.max(Math.round(h * scale), 64);
+        var tmp = document.createElement('canvas');
+        tmp.width = nw; tmp.height = nh;
+        tmp.getContext('2d').drawImage(canvas, 0, 0, nw, nh);
+        canvas.width = nw; canvas.height = nh;
+        canvas.getContext('2d').drawImage(tmp, 0, 0);
+        tmp.width = 1; tmp.height = 1;
+        compressed = canvas.toDataURL('image/jpeg', 0.4);
+      }
+      canvas.width = 1; canvas.height = 1;
       pendingImages.push(compressed);
       renderAttachmentPreviews();
     }
@@ -4347,8 +5004,24 @@
     }
 
     // ===== Markdown (XSS-safe) =====
+    function stripLeakedXML(t) {
+      return t
+        .replace(/<tool_call>[\s\S]*?<\/tool_call>/g, '')
+        .replace(/<function_call>[\s\S]*?<\/function_call>/g, '')
+        .replace(/<tool_calls>[\s\S]*?<\/tool_calls>/g, '')
+        .replace(/<arg_key>[\s\S]*?<\/arg_key>/g, '')
+        .replace(/<arg_value>[\s\S]*?<\/arg_value>/g, '')
+        .replace(/<\|tool_call\|>[\s\S]*?(<\|\/tool_call\|>|<\|im_end\|>)/g, '')
+        .replace(/<\|im_start\|>tool_call[\s\S]*?<\|im_end\|>/g, '')
+        .replace(/<\|startoftool\|>[\s\S]*?<\|endoftool\|>/g, '')
+        .replace(/\[TOOL_CALL\][\s\S]*?\[\/TOOL_CALL\]/g, '')
+        .replace(/<(tool_call|function_call|arg_key|arg_value|tool_calls)\b[^>]*>(?![^<]*<\/\1>)/g, '')
+        .replace(/\S*<\/(arg_key|arg_value|tool_call|function_call|tool_calls)>/g, '')
+        .replace(/\n{3,}/g, '\n\n').trim();
+    }
     function renderMarkdown(text) {
       if (!text) return '';
+      text = stripLeakedXML(text);
       text = esc(text);
       
       // Code blocks with syntax highlighting
@@ -4540,12 +5213,38 @@
       e.preventDefault();
     }, { passive: false });
 
-    // iOS keyboard viewport fix
+    // iOS keyboard viewport fix — prevent page push-up
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', function() {
-        document.body.style.height = window.visualViewport.height + 'px';
-      });
+      var _vvRAF = null;
+      function onViewportChange() {
+        if (_vvRAF) return;
+        _vvRAF = requestAnimationFrame(function() {
+          _vvRAF = null;
+          var vv = window.visualViewport;
+          var offsetTop = vv.offsetTop;
+          document.body.style.height = vv.height + 'px';
+          document.body.style.transform = 'translateY(' + offsetTop + 'px)';
+          // keep chat scrolled to bottom when keyboard opens
+          var c = document.getElementById('chatContainer');
+          if (c) c.scrollTop = c.scrollHeight;
+        });
+      }
+      window.visualViewport.addEventListener('resize', onViewportChange);
+      window.visualViewport.addEventListener('scroll', onViewportChange);
     }
+
+    // iOS: prevent body scroll when keyboard is open
+    document.addEventListener('touchmove', function(e) {
+      var t = e.target;
+      while (t && t !== document.body) {
+        var ov = window.getComputedStyle(t).overflowY;
+        if (ov === 'auto' || ov === 'scroll') return;
+        t = t.parentElement;
+      }
+      if (window.visualViewport && window.visualViewport.height < window.innerHeight * 0.85) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
     // ===== WiFi =====
     var _wifiSSID = null;
@@ -4908,6 +5607,11 @@
 
     // BUG2: reveal body only after preferences (theme/lang/font) are applied to prevent flicker
     document.body.classList.add('ready');
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(function() {});
+    }
   </script>
 </body>
 </html>
