@@ -1749,8 +1749,21 @@
             <label id="reflectModelLabel">模型名</label>
             <input id="reflectModel" type="text" placeholder="e.g. deepseek-chat, glm-5">
           </div>
-          <!-- Draft Guide Toggle -->
+          <!-- Reflection Toggle -->
           <div class="settings-field" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+              <span>
+                <span id="reflectionLabel" style="font-size:13px;font-weight:500"></span>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px" id="reflectionDesc"></div>
+              </span>
+              <label class="toggle-switch" style="margin-left:12px;flex-shrink:0">
+                <input type="checkbox" id="reflectionEnabled" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <!-- Draft Guide Toggle -->
+          <div class="settings-field" style="margin-top:8px">
             <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
               <span>
                 <span id="draftGuideLabel" style="font-size:13px;font-weight:500"></span>
@@ -2262,6 +2275,8 @@
         reflectModeLabel: '配置模式',
         reflectProviderLabel: 'API 格式',
         reflectModelLabel: '模型名',
+        reflectionLabel: '错误回溯 (Reflection)',
+        reflectionDesc: '工具调用失败时，回溯模型分析错误并生成纠正指令。',
         draftGuideLabel: '策略引导 (Draft Guide)',
         draftGuideDesc: '每轮对话前，回溯模型先生成简短策略指引，帮助工作模型更好地处理请求。',
         visionEndpoint: '视觉模型 (独立配置)',
@@ -2333,6 +2348,8 @@
         reflectModeLabel: 'Mode',
         reflectProviderLabel: 'API Format',
         reflectModelLabel: 'Model',
+        reflectionLabel: 'Error Reflection',
+        reflectionDesc: 'When a tool call fails, the reflect model analyzes the error and generates corrective instructions.',
         draftGuideLabel: 'Draft Guide',
         draftGuideDesc: 'Before each turn, the reflect model generates brief strategy guidance for the worker model.',
         visionEndpoint: 'Vision Model (Independent)',
@@ -4041,6 +4058,7 @@
         document.getElementById('reflectBaseURL').value = ep.baseURL || '';
         document.getElementById('reflectApiKey').value = ep.apiKey || '';
         document.getElementById('reflectModel').value = ep.model || '';
+        document.getElementById('reflectionEnabled').checked = ep.reflection !== false;
         document.getElementById('draftGuideEnabled').checked = !!ep.draftGuide;
         onReflectModeChange();
       } else {
@@ -4049,6 +4067,7 @@
         document.getElementById('reflectBaseURL').value = '';
         document.getElementById('reflectApiKey').value = '';
         document.getElementById('reflectModel').value = '';
+        document.getElementById('reflectionEnabled').checked = true;
         document.getElementById('draftGuideEnabled').checked = false;
         onReflectModeChange();
       }
@@ -4062,6 +4081,7 @@
       if (!model || !baseURL) return undefined;
 
       var mode = document.getElementById('reflectMode').value;
+      var reflection = document.getElementById('reflectionEnabled').checked;
       var draftGuide = document.getElementById('draftGuideEnabled').checked;
       if (mode === 'local') {
         return {
@@ -4070,6 +4090,7 @@
           baseURL: baseURL,
           apiKey: '',
           model: model,
+          reflection: reflection,
           draftGuide: draftGuide
         };
       } else {
@@ -4079,6 +4100,7 @@
           baseURL: baseURL,
           apiKey: document.getElementById('reflectApiKey').value.trim(),
           model: model,
+          reflection: reflection,
           draftGuide: draftGuide
         };
       }
@@ -4095,6 +4117,10 @@
       if (provLabel) provLabel.textContent = t('reflectProviderLabel');
       var mdlLabel = document.getElementById('reflectModelLabel');
       if (mdlLabel) mdlLabel.textContent = t('reflectModelLabel');
+      var rfLabel = document.getElementById('reflectionLabel');
+      if (rfLabel) rfLabel.textContent = t('reflectionLabel');
+      var rfDesc = document.getElementById('reflectionDesc');
+      if (rfDesc) rfDesc.textContent = t('reflectionDesc');
       var dgLabel = document.getElementById('draftGuideLabel');
       if (dgLabel) dgLabel.textContent = t('draftGuideLabel');
       var dgDesc = document.getElementById('draftGuideDesc');
