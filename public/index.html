@@ -1666,7 +1666,7 @@
         </div>
         <div class="settings-field" id="baseURLField">
           <label>Base URL</label>
-          <input id="setBaseURL" type="text" placeholder="e.g. http://localhost:8000/v1">
+          <input id="setBaseURL" type="text" placeholder="e.g. http://192.168.1.100:8000/v1">
         </div>
         <div class="settings-field" id="apiKeyField">
           <label>API Key</label>
@@ -1730,7 +1730,7 @@
           </div>
           <div class="settings-field">
             <label>Base URL</label>
-            <input id="reflectBaseURL" type="text" placeholder="http://localhost:8000/v1">
+            <input id="reflectBaseURL" type="text" placeholder="http://192.168.1.100:8000/v1">
           </div>
           <div id="reflectCloudFields" style="display:none">
             <div class="settings-field">
@@ -1802,7 +1802,7 @@
           </div>
           <div class="settings-field" id="visionBaseURLField" style="display:none">
             <label>Base URL</label>
-            <input id="visionBaseURL" type="text" placeholder="http://localhost:8000/v1">
+            <input id="visionBaseURL" type="text" placeholder="http://192.168.1.100:8000/v1">
           </div>
           <div class="settings-field" id="visionProviderField" style="display:none">
             <label id="visionProviderLabel">API Format</label>
@@ -4174,7 +4174,7 @@
       if (provider === 'anthropic') {
         urlInput.placeholder = '(Required) e.g., https://api.anthropic.com';
       } else {
-        urlInput.placeholder = '(Required) e.g., http://localhost:8000/v1';
+        urlInput.placeholder = '(Required) e.g., http://192.168.1.100:8000/v1';
       }
     }
 
@@ -4203,7 +4203,7 @@
 
     function buildVisionEndpointConfig() {
       var enabled = document.getElementById('visionEndpointEnabled').checked;
-      if (!enabled) return undefined;
+      if (!enabled) return { enabled: false };
       var mode = document.getElementById('visionMode').value;
       if (mode === 'auto') {
         var key = document.getElementById('visionApiKey').value.trim();
@@ -4514,11 +4514,8 @@
         config.scheduler.reflectEndpoint = reflectEp;
       }
 
-      // Attach independent vision endpoint config
-      var visionEp = buildVisionEndpointConfig();
-      if (visionEp) {
-        config.visionEndpoint = visionEp;
-      }
+      // Attach independent vision endpoint config (always include, even when disabled)
+      config.visionEndpoint = buildVisionEndpointConfig();
 
       // API key: always include in config for config.json persistence,
       // only update .env if the key actually changed
