@@ -2024,7 +2024,7 @@
       if (oldParts.length === 4) {
         prefixes.push(oldParts[0] + '.' + oldParts[1] + '.' + oldParts[2] + '.');
       }
-      var common = ['192.168.31.', '192.168.0.', '192.168.1.', '192.168.2.', '192.168.50.', '10.0.0.'];
+      var common = ['192.168.0.', '192.168.1.', '192.168.2.', '192.168.50.', '10.0.0.'];
       for (var c = 0; c < common.length; c++) {
         if (prefixes.indexOf(common[c]) === -1) prefixes.push(common[c]);
       }
