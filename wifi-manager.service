@@ -1,0 +1,15 @@
+[Unit]
+Description=PiWeb WiFi Manager (standalone)
+After=network.target NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/pi/ai-assistant/wifi-manager.py
+Restart=always
+RestartSec=3
+User=root
+Environment=WIFI_MANAGER_PORT=8080
+
+[Install]
+WantedBy=multi-user.target

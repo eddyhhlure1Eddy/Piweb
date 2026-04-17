@@ -1,0 +1,45 @@
+# Environment — NEVER commit real .env
+.env
+.env.*
+!.env.example
+
+# Config
+*.local.json
+
+# Dependencies
+node_modules/
+
+# Never ship TypeScript declarations in release dist/ — they expose API surface
+dist/*.d.ts
+dist/**/*.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Runtime cache / browser screenshots
+.playwright-mcp/
+
+# User-generated data (private — NEVER push)
+self-tools/
+data/
+!data/.gitkeep
+grids/
+!grids/.gitkeep
+workplace/
+!workplace/.gitkeep
+
+# Misc garbage
+gui_C
+
+# Fix logs — keep the directory structure but ignore the per-fix markdown files
+docs/fix-logs/*
+!docs/fix-logs/.gitkeep

@@ -1,0 +1,26 @@
+{
+  "enabled": true,
+  "tasks": [
+    {
+      "id": "daily-greeting",
+      "name": "每日问候",
+      "schedule": "0 8 * * *",
+      "enabled": true,
+      "prompt": "早上好！今天是{date}，请帮我总结一下今天的工作计划。",
+      "session": "daily-tasks"
+    },
+    {
+      "id": "hourly-check",
+      "name": "每小时检查",
+      "schedule": "0 * * * *",
+      "enabled": false,
+      "prompt": "请检查系统状态和待办事项。",
+      "session": "hourly-check"
+    }
+  ],
+  "settings": {
+    "autoCreateSession": true,
+    "saveToMemory": true,
+    "notifyOnComplete": false
+  }
+}
