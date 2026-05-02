@@ -6,12 +6,9 @@
     "piweb": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
     "start": "piweb --web",
     "cli": "piweb --cli",
-    "daemon": "piweb --daemon",
-    "dev": "node --watch --loader ts-node/esm src/index.ts --web",
-    "prepare": "tsc"
+    "daemon": "piweb --daemon"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

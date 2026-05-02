@@ -1579,7 +1579,43 @@
     .wifi-empty{padding:20px;text-align:center;color:var(--text3);font-size:13px}
     #wifiBtn .wifi-indicator{width:6px;height:6px;border-radius:50%;position:absolute;top:4px;right:4px}
     #wifiBtn{position:relative}
+    /* ─── Tool args / code streaming display ─── */
+    .tool-card-args {
+      margin: 4px 8px 0; padding: 6px 10px;
+      background: var(--bg0, #0d1117); border-radius: 4px;
+      font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 12px;
+      max-height: 360px; overflow: auto;
+      border: 1px solid var(--border);
+    }
+    .tool-card-args-path {
+      color: var(--text3); font-size: 11px; margin-bottom: 4px;
+      word-break: break-all;
+    }
+    .tool-card-args pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+    .tool-card-args code { background: none !important; padding: 0 !important; font-size: 12px; }
+    .tool-card-args.streaming::after {
+      content: '▊'; color: var(--accent, #43e97b);
+      animation: blink 1s step-end infinite; margin-left: 2px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .diff-line-add { color: #4ade80; background: rgba(74, 222, 128, 0.1); display: block; padding: 0 4px; }
+    .diff-line-del { color: #f87171; background: rgba(248, 113, 113, 0.1); display: block; padding: 0 4px; }
+    .diff-line-mod { color: #fbbf24; background: rgba(251, 191, 36, 0.08); display: block; padding: 0 4px; }
+    .diff-line-ctx { color: var(--text3); display: block; padding: 0 4px; }
+    /* LSP diagnostics block */
+    .lsp-diagnostics { margin: 6px 0; border-left: 3px solid #ef4444; background: rgba(239,68,68,0.08); border-radius: 4px; padding: 6px 10px; }
+    .lsp-diagnostics-file { color: #f87171; font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+    .lsp-diag-line { display: block; font-size: 12px; font-family: 'Consolas', 'Menlo', monospace; padding: 1px 4px; }
+    .lsp-diag-error { color: #f87171; background: rgba(248,113,113,0.06); }
+    .lsp-diag-warn { color: #fbbf24; background: rgba(251,191,36,0.06); }
+    .lsp-diag-ok { color: #4ade80; background: rgba(74,222,128,0.06); border-left: 3px solid #4ade80; border-radius: 4px; padding: 4px 10px; margin: 6px 0; font-size: 12px; }
+    .lsp-syntax-fail { color: #f87171; background: rgba(248,113,113,0.08); border-left: 3px solid #ef4444; border-radius: 4px; padding: 6px 10px; margin: 6px 0; font-size: 12px; font-family: 'Consolas', 'Menlo', monospace; white-space: pre-wrap; }
+    .lsp-syntax-ok { color: #4ade80; font-size: 12px; padding: 2px 0; }
+    /* hljs dark theme tweaks to blend with the chat bg */
+    .hljs { background: transparent !important; padding: 0 !important; }
   </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
   <script>
     (function(){
       var t = 'dark';
@@ -1666,7 +1702,7 @@
         </div>
         <div class="settings-field" id="baseURLField">
           <label>Base URL</label>
-          <input id="setBaseURL" type="text" placeholder="e.g. http://192.168.1.100:8000/v1">
+          <input id="setBaseURL" type="text" placeholder="e.g. http://localhost:8000/v1">
         </div>
         <div class="settings-field" id="apiKeyField">
           <label>API Key</label>
@@ -1730,7 +1766,7 @@
           </div>
           <div class="settings-field">
             <label>Base URL</label>
-            <input id="reflectBaseURL" type="text" placeholder="http://192.168.1.100:8000/v1">
+            <input id="reflectBaseURL" type="text" placeholder="http://localhost:8000/v1">
           </div>
           <div id="reflectCloudFields" style="display:none">
             <div class="settings-field">
@@ -1802,7 +1838,7 @@
           </div>
           <div class="settings-field" id="visionBaseURLField" style="display:none">
             <label>Base URL</label>
-            <input id="visionBaseURL" type="text" placeholder="http://192.168.1.100:8000/v1">
+            <input id="visionBaseURL" type="text" placeholder="http://localhost:8000/v1">
           </div>
           <div class="settings-field" id="visionProviderField" style="display:none">
             <label id="visionProviderLabel">API Format</label>
@@ -1832,10 +1868,59 @@
       </div>
       <div class="settings-section">
         <div class="settings-section-header">
+          <div class="settings-section-label">LSP (Language Server)</div>
+          <label class="toggle-switch" style="margin-left:auto">
+            <input type="checkbox" id="setLspEnabled" checked onchange="onLspToggle(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div id="lspStatus" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-header">
           <div class="settings-section-label">Skills</div>
           <span class="settings-section-badge" id="skillsBadge">0</span>
         </div>
         <div id="skillsToggleList"></div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-label">Trusted Peers (whitelist)</div>
+        <div id="trustedPeersList" style="margin-bottom:8px"></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="tpName" type="text" placeholder="Name (e.g. pi)" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px">
+          <input id="tpIP" type="text" placeholder="IP (e.g. 192.168.1.100)" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px">
+          <input id="tpPort" type="text" placeholder="3000" style="width:55px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px" value="3000">
+          <button onclick="addTrustedPeer()" style="padding:6px 12px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-size:13px;cursor:pointer;white-space:nowrap">Add</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-label">Defense Mode</div>
+        <div class="settings-field">
+          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;user-select:none;padding:4px 0">
+            <input id="setDefenseMode" type="checkbox" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-top:2px">
+            <span style="font-size:13px;line-height:1.4">Block all peer connections — accept only direct LAN access from phone/laptop</span>
+          </label>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Restart required after change. When enabled: no peer discovery, no relay daemon, incoming peer WS rejected.</div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-label">Server Port</div>
+        <div class="settings-field">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="setPort" type="number" min="1" max="65535" placeholder="3000" style="width:100px">
+            <span style="font-size:11px;color:var(--text3)">Restart required after change</span>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-label">Context Compression</div>
+        <div class="settings-field">
+          <label>Token Threshold</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="setCompressTokenThreshold" type="number" min="10000" max="1000000" step="1000" placeholder="190000" style="width:140px">
+            <span style="font-size:11px;color:var(--text3)">Auto-compress when context exceeds this token count. Default 190000. Applied immediately.</span>
+          </div>
+        </div>
       </div>
     </div>
     <div class="settings-footer">
@@ -1946,6 +2031,26 @@
   </div>
 
   <script>
+    // ─── Auth: browser relies on HttpOnly session cookie (piweb_sess) ───
+    // Server sets cookie on page load; browser sends it automatically.
+    // Token auth exists only for CLI / programmatic access — frontend never needs it.
+
+    function piFetch(url, opts) {
+      opts = opts || {};
+      return fetch(url, opts).then(function(r) {
+        if (r.status === 401 || r.status === 403) {
+          // Session cookie lost (server restart?) — reload to get a fresh cookie
+          location.reload();
+        }
+        return r;
+      });
+    }
+
+    function wsUrl() {
+      var proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+      return proto + location.host + '/ws';
+    }
+
     var ws = null;
     var currentSessionId = null;
     try { currentSessionId = localStorage.getItem('piweb_session'); } catch(e) {}
@@ -2023,7 +2128,7 @@
     }
 
     function pollTimerCount() {
-      fetch('/api/timers').then(function(r) { return r.json(); }).then(function(timers) {
+      piFetch('/api/timers').then(function(r) { return r.json(); }).then(function(timers) {
         _activeTimers = timers;
         updateTimerBar();
       }).catch(function() {});
@@ -2032,7 +2137,7 @@
     function stopAllTimers() {
       var msg = currentLang === 'zh' ? '停止所有循环任务？' : 'Stop all loop tasks?';
       if (!confirm(msg)) return;
-      fetch('/api/timers/stop-all', { method: 'POST' }).then(function(r) { return r.json(); }).then(function() {
+      piFetch('/api/timers/stop-all', { method: 'POST' }).then(function(r) { return r.json(); }).then(function() {
         _activeTimers = [];
         updateTimerBar();
         showToast(currentLang === 'zh' ? '已停止所有任务' : 'All tasks stopped');
@@ -2062,7 +2167,7 @@
     }
 
     function checkSvcStatus() {
-      fetch('/api/service/status').then(function(r) { return r.json(); }).then(function(d) {
+      piFetch('/api/service/status').then(function(r) { return r.json(); }).then(function(d) {
         updateSvcBtn(d.active ? 'running' : 'stopped');
       }).catch(function() { updateSvcBtn('unknown'); });
     }
@@ -2072,7 +2177,7 @@
         var msg = currentLang === 'zh' ? 'Restart PIweb service?' : 'Restart PIweb service?';
         if (!confirm(msg)) return;
         updateSvcBtn('loading');
-        fetch('/api/service/restart', { method: 'POST' })
+        piFetch('/api/service/restart', { method: 'POST' })
           .then(function(r) { return r.json(); })
           .then(function(d) {
             showToast(d.success ? 'Restarting...' : (d.error || 'Failed'));
@@ -2082,7 +2187,7 @@
         var msg2 = currentLang === 'zh' ? 'Start PIweb service?' : 'Start PIweb service?';
         if (!confirm(msg2)) return;
         updateSvcBtn('loading');
-        fetch('/api/service/start', { method: 'POST' })
+        piFetch('/api/service/start', { method: 'POST' })
           .then(function(r) { return r.json(); })
           .then(function(d) {
             showToast(d.success ? 'PIweb started' : (d.error || 'Failed'));
@@ -2161,7 +2266,7 @@
       btn.disabled = true;
       btn.textContent = zh ? '创建中...' : 'Starting...';
 
-      fetch('/api/timers', {
+      piFetch('/api/timers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -2450,8 +2555,7 @@
         try { if (ws.readyState < 2) ws.close(); } catch(e) {}
       }
 
-      var proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
-      ws = new WebSocket(proto + location.host + '/ws');
+      ws = new WebSocket(wsUrl());
       wsIntentionalClose = false;
 
       ws.onopen = function() {
@@ -2550,7 +2654,7 @@
     function handleWsMessage(msg) {
       // Ignore streaming events that arrive after the user pressed stop
       // (agent may still emit a few tokens before actually halting)
-      if (!sending && (msg.type === 'thinking' || msg.type === 'token' || msg.type === 'tool_start' || msg.type === 'tool_end' || msg.type === 'reflection')) {
+      if (!sending && (msg.type === 'thinking' || msg.type === 'token' || msg.type === 'tool_start' || msg.type === 'tool_partial' || msg.type === 'tool_end' || msg.type === 'reflection')) {
         return;
       }
 
@@ -2630,10 +2734,23 @@
               '</div>' +
               '<span class="tool-card-chevron">\u25B6</span>' +
             '</div>' +
+            '<div class="tool-card-args streaming" style="display:none"></div>' +
             '<div class="tool-card-result"></div>';
           document.getElementById('chatContainer').appendChild(card);
           activeToolCards[toolKey] = card;
+          // If args were provided up-front (non-streaming path), render them now
+          if (msg.args && Object.keys(msg.args).length > 0) {
+            updateToolCardArgs(card, msg.name, msg.args);
+          }
           scrollToBottom();
+          break;
+
+        case 'tool_partial':
+          var partialKeys = Object.keys(activeToolCards);
+          var partialKey = partialKeys[partialKeys.length - 1];
+          if (partialKey && activeToolCards[partialKey]) {
+            updateToolCardArgs(activeToolCards[partialKey], msg.name, msg.args || {});
+          }
           break;
 
         case 'tool_end':
@@ -2647,9 +2764,12 @@
             var tc = activeToolCards[matchKey];
             tc.className = 'tool-card done';
             tc.querySelector('.tool-card-status').textContent = t('complete');
+            // Stop the streaming cursor on args pane
+            var argsPane = tc.querySelector('.tool-card-args');
+            if (argsPane) argsPane.classList.remove('streaming');
             var resultEl = tc.querySelector('.tool-card-result');
             var resultText = msg.result || t('noOutput');
-            resultEl.textContent = resultText.length > 1000 ? resultText.slice(0, 1000) + '...' : resultText;
+            renderToolResult(resultEl, resultText);
             // Render file preview if present (using DOM API to prevent XSS)
             if (msg.file && msg.file.data && msg.file.mime) {
               var safeMimes = ['image/png','image/jpeg','image/gif','image/webp','image/bmp','image/x-icon','image/svg+xml',
@@ -2736,6 +2856,7 @@
             currentAssistantEl.remove();
           } else if (currentAssistantContentEl && currentAssistantText.trim()) {
             currentAssistantContentEl.innerHTML = renderMarkdown(currentAssistantText);
+            highlightCodeIn(currentAssistantContentEl);
           }
           currentAssistantEl = null;
           currentAssistantContentEl = null;
@@ -3020,6 +3141,7 @@
             } else {
               // Run finished — render as markdown
               currentAssistantContentEl.innerHTML = renderMarkdown(currentAssistantText);
+              highlightCodeIn(currentAssistantContentEl);
               currentAssistantEl = null;
               currentAssistantContentEl = null;
               currentAssistantText = '';
@@ -3065,7 +3187,7 @@
         case 'session_updated':
           // Another device finished a run on this session — reload messages
           if (msg.sessionId === currentSessionId && !sending) {
-            fetch('/api/sessions/' + encodeURIComponent(msg.sessionId))
+            piFetch('/api/sessions/' + encodeURIComponent(msg.sessionId))
               .then(function(r) { return r.ok ? r.json() : null; })
               .then(function(session) {
                 if (session && session.id === currentSessionId && !sending) {
@@ -3404,7 +3526,7 @@
       }
       loadSessionsTimer = true;
       try {
-        var res = await fetch('/api/sessions');
+        var res = await piFetch('/api/sessions');
         var sessions = await res.json();
         renderSessions(sessions);
       } catch(e) {}
@@ -3518,7 +3640,7 @@
         resetStreamingState();
       }
       var wasCurrent = (currentSessionId === id);
-      await fetch('/api/sessions/' + encodeURIComponent(id), { method: 'DELETE' });
+      await piFetch('/api/sessions/' + encodeURIComponent(id), { method: 'DELETE' });
       if (wasCurrent) {
         setCurrentSession(null);
         document.getElementById('chatContainer').innerHTML = '';
@@ -3817,7 +3939,7 @@
 
     async function loadSkills() {
       try {
-        var res = await fetch('/api/skills');
+        var res = await piFetch('/api/skills');
         skills = await res.json();
       } catch(e) {}
     }
@@ -4174,7 +4296,7 @@
       if (provider === 'anthropic') {
         urlInput.placeholder = '(Required) e.g., https://api.anthropic.com';
       } else {
-        urlInput.placeholder = '(Required) e.g., http://192.168.1.100:8000/v1';
+        urlInput.placeholder = '(Required) e.g., http://localhost:8000/v1';
       }
     }
 
@@ -4256,15 +4378,18 @@
     function openSettings() {
       buildProviderSelect();
       Promise.all([
-        fetch('/api/settings').then(function(r) { return r.json(); }).catch(function() { return {}; }),
-        fetch('/api/apikey').then(function(r) { return r.json(); }).catch(function() { return { hasKey: false }; }),
-        fetch('/api/mcp/status').then(function(r) { return r.json(); }).catch(function() { return []; }),
-        fetch('/api/skills').then(function(r) { return r.json(); }).catch(function() { return []; })
+        piFetch('/api/settings').then(function(r) { return r.json(); }).catch(function() { return {}; }),
+        piFetch('/api/apikey').then(function(r) { return r.json(); }).catch(function() { return { hasKey: false }; }),
+        piFetch('/api/mcp/status').then(function(r) { return r.json(); }).catch(function() { return []; }),
+        piFetch('/api/skills').then(function(r) { return r.json(); }).catch(function() { return []; }),
+        piFetch('/api/peers/trusted').then(function(r) { return r.json(); }).catch(function() { return []; })
       ]).then(function(results) {
         var config = results[0];
         var keyStatus = results[1];
         var mcpServers = results[2];
         var allAvailableSkills = results[3];
+        var trustedPeers = results[4];
+        renderTrustedPeers(trustedPeers);
 
         // Select the right preset
         var presetValue = findPresetByConfig(config);
@@ -4312,8 +4437,25 @@
         // MCP toggle list
         renderMCPToggles(mcpServers);
 
+        // LSP status + toggle
+        document.getElementById('setLspEnabled').checked = config.lspEnabled !== false;
+        loadLspStatus();
+
         // Skills toggle list
         renderSkillsToggles(allAvailableSkills);
+
+        // Server port
+        document.getElementById('setPort').value = config.port || '';
+
+        // Defense mode
+        document.getElementById('setDefenseMode').checked = !!config.defenseMode;
+
+        // Context compression — only tokenThreshold is exposed, other tuning fields use defaults
+        var compressThresholdEl = document.getElementById('setCompressTokenThreshold');
+        if (compressThresholdEl) {
+          var ct = config.compression && config.compression.tokenThreshold;
+          compressThresholdEl.value = (typeof ct === 'number' && ct > 0) ? ct : '';
+        }
 
         onProviderChange(true);  // skipValueUpdate=true on load
         updateSettingsLabels();
@@ -4359,7 +4501,7 @@
       statusEl.className = 'toggle-row-status off';
       statusEl.innerHTML = '<span class="toggle-loading"></span>';
 
-      fetch('/api/mcp/toggle', {
+      piFetch('/api/mcp/toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name, enabled: enabled })
@@ -4376,14 +4518,14 @@
             statusEl.textContent = t('mcpOff');
           }
           // Refresh MCP JSON editor to stay in sync
-          fetch('/api/settings').then(function(r) { return r.json(); }).then(function(config) {
+          piFetch('/api/settings').then(function(r) { return r.json(); }).then(function(config) {
             try {
               document.getElementById('setMCP').value = Object.keys(config.mcp || {}).length > 0
                 ? JSON.stringify(config.mcp, null, 2) : '';
             } catch(e) {}
           });
           // Update badge
-          fetch('/api/mcp/status').then(function(r) { return r.json(); }).then(function(servers) {
+          piFetch('/api/mcp/status').then(function(r) { return r.json(); }).then(function(servers) {
             var badge = document.getElementById('mcpBadge');
             var active = servers.filter(function(s) { return s.connected; }).length;
             badge.textContent = active + '/' + servers.length;
@@ -4394,6 +4536,44 @@
         statusEl.className = 'toggle-row-status off';
         statusEl.textContent = t('error');
         showToast(t('mcpToggleFailed') + e.message, true);
+      });
+    }
+
+    function onLspToggle(enabled) {
+      var statusEl = document.getElementById('lspStatus');
+      statusEl.textContent = enabled ? '...' : '';
+      piFetch('/api/lsp/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: enabled })
+      }).then(function(r) { return r.json(); }).then(function(res) {
+        if (res.ok) {
+          loadLspStatus();
+          showToast(enabled ? 'LSP enabled' : 'LSP disabled');
+        }
+      }).catch(function(e) {
+        showToast('LSP toggle failed: ' + e.message, true);
+      });
+    }
+
+    function loadLspStatus() {
+      piFetch('/api/lsp/status').then(function(r) { return r.json(); }).then(function(status) {
+        var el = document.getElementById('lspStatus');
+        var toggle = document.getElementById('setLspEnabled');
+        if (toggle) toggle.checked = status.enabled;
+        if (status.enabled && status.clients && status.clients.length > 0) {
+          el.textContent = status.clients.map(function(c) { return c.id + ' (' + c.status + ')'; }).join(', ');
+          el.style.color = 'var(--green)';
+        } else if (status.enabled) {
+          el.textContent = 'No active servers (spawned on demand)';
+          el.style.color = 'var(--text3)';
+        } else {
+          el.textContent = 'Disabled';
+          el.style.color = 'var(--red)';
+        }
+      }).catch(function() {
+        var el = document.getElementById('lspStatus');
+        if (el) { el.textContent = 'Status unavailable'; el.style.color = 'var(--text3)'; }
       });
     }
 
@@ -4448,6 +4628,49 @@
       document.getElementById('settingsPanel').classList.remove('open');
     }
 
+    function renderTrustedPeers(peers) {
+      var el = document.getElementById('trustedPeersList');
+      if (!peers || peers.length === 0) {
+        el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:4px 0">No trusted peers</div>';
+        return;
+      }
+      el.innerHTML = peers.map(function(p) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">'
+          + '<span style="font-weight:500;font-size:13px;color:var(--text)">' + p.name + '</span>'
+          + '<span style="font-size:12px;color:var(--text3)">' + p.ip + ':' + (p.port || 3000) + '</span>'
+          + '<button onclick="removeTrustedPeer(\'' + p.name + '\')" style="margin-left:auto;padding:2px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:none;color:var(--text3);font-size:11px;cursor:pointer">Remove</button>'
+          + '</div>';
+      }).join('');
+    }
+
+    function addTrustedPeer() {
+      var name = document.getElementById('tpName').value.trim();
+      var ip = document.getElementById('tpIP').value.trim();
+      var port = parseInt(document.getElementById('tpPort').value) || 3000;
+      if (!name || !ip) return;
+      piFetch('/api/peers/trusted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, ip: ip, port: port })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) {
+          renderTrustedPeers(d.trustedPeers);
+          document.getElementById('tpName').value = '';
+          document.getElementById('tpIP').value = '';
+        }
+      });
+    }
+
+    function removeTrustedPeer(name) {
+      piFetch('/api/peers/trusted', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) renderTrustedPeers(d.trustedPeers);
+      });
+    }
+
     function updateSettingsLabels() {
       var titleEl = document.querySelector('.settings-title');
       if (titleEl) {
@@ -4499,7 +4722,7 @@
 
       // Scheduler config — FunnyPi uses plan A/B radio, others disable scheduler
       // (scheduler section is hidden for non-FunnyPi; stale mode from previous
-      //  FunnyPi config would override user's custom model — bug fix 2026-03-26)
+      //  FunnyPi config would override user's custom model)
       if (presetValue === 'funnypi') {
         var selectedPlan = document.querySelector('input[name="funnypiPlan"]:checked');
         config.scheduler = { mode: selectedPlan ? selectedPlan.value : 'performance' };
@@ -4517,6 +4740,23 @@
       // Attach independent vision endpoint config (always include, even when disabled)
       config.visionEndpoint = buildVisionEndpointConfig();
 
+      // Server port
+      var portVal = parseInt(document.getElementById('setPort').value);
+      if (portVal > 0 && portVal <= 65535) config.port = portVal;
+
+      // Defense mode
+      config.defenseMode = document.getElementById('setDefenseMode').checked;
+
+      // LSP enabled
+      config.lspEnabled = document.getElementById('setLspEnabled').checked;
+
+      // Context compression — only send tokenThreshold; backend deep-merges to preserve other fields
+      var compressThresholdRaw = document.getElementById('setCompressTokenThreshold').value;
+      var compressThreshold = parseInt(compressThresholdRaw);
+      if (compressThresholdRaw !== '' && compressThreshold >= 10000 && compressThreshold <= 1000000) {
+        config.compression = { tokenThreshold: compressThreshold };
+      }
+
       // API key: always include in config for config.json persistence,
       // only update .env if the key actually changed
       var apiKeyInput = document.getElementById('setApiKey').value.trim();
@@ -4524,7 +4764,7 @@
       if (apiKeyInput) {
         config.apiKey = apiKeyInput;
         if (apiKeyInput !== _originalApiKey) {
-          saveKeyPromise = fetch('/api/apikey', {
+          saveKeyPromise = piFetch('/api/apikey', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ key: apiKeyInput })
@@ -4535,7 +4775,7 @@
       }
 
       saveKeyPromise.then(function() {
-        return fetch('/api/settings', {
+        return piFetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(config)
@@ -4865,7 +5105,7 @@
         return;
       }
       if (cmd.startsWith('/switch ') && args) {
-        fetch('/api/sessions').then(function(r) { return r.json(); }).then(function(sessions) {
+        piFetch('/api/sessions').then(function(r) { return r.json(); }).then(function(sessions) {
           var match = sessions.find(function(s) { return s.id.startsWith(args); });
           if (match) { switchSession(match.id); appendSystem(t('switchedTo') + match.title); }
           else appendSystem(t('sessionNotFound') + args);
@@ -4875,7 +5115,7 @@
       if (cmd.startsWith('/delete')) {
         if (cmd === '/delete' && currentSessionId) { deleteSession(currentSessionId); }
         else if (args) {
-          fetch('/api/sessions').then(function(r) { return r.json(); }).then(function(sessions) {
+          piFetch('/api/sessions').then(function(r) { return r.json(); }).then(function(sessions) {
             var match = sessions.find(function(s) { return s.id.startsWith(args); });
             if (match) { deleteSession(match.id); }
             else appendSystem(t('notFound') + args);
@@ -4942,7 +5182,9 @@
       if (!content || !content.trim()) return;
       var el = appendMessageEl(role);
       if (role === 'assistant') {
-        el.querySelector('.msg-content').innerHTML = renderMarkdown(content);
+        var mc = el.querySelector('.msg-content');
+        mc.innerHTML = renderMarkdown(content);
+        highlightCodeIn(mc);
       } else {
         el.textContent = content;
       }
@@ -5042,6 +5284,169 @@
         .replace(/\S*<\/(arg_key|arg_value|tool_call|function_call|tool_calls)>/g, '')
         .replace(/\n{3,}/g, '\n\n').trim();
     }
+    // Detect language from file extension for syntax highlighting
+    function detectLang(path) {
+      if (!path) return 'plaintext';
+      var ext = (path.split('.').pop() || '').toLowerCase();
+      var map = {
+        py:'python', pyw:'python', ts:'typescript', tsx:'typescript',
+        js:'javascript', jsx:'javascript', mjs:'javascript', cjs:'javascript',
+        json:'json', html:'html', htm:'html', css:'css', scss:'scss',
+        md:'markdown', markdown:'markdown', sh:'bash', bash:'bash', zsh:'bash',
+        yml:'yaml', yaml:'yaml', toml:'ini', ini:'ini', conf:'ini',
+        c:'c', h:'c', cpp:'cpp', cc:'cpp', cxx:'cpp', hpp:'cpp',
+        rs:'rust', go:'go', java:'java', kt:'kotlin', swift:'swift',
+        rb:'ruby', php:'php', xml:'xml', svg:'xml', sql:'sql',
+        dockerfile:'dockerfile', lua:'lua', r:'r', pl:'perl',
+        vue:'javascript', svelte:'javascript'
+      };
+      return map[ext] || 'plaintext';
+    }
+
+    // Apply hljs highlighting to a code element (safe if hljs not loaded)
+    function highlightCode(el) {
+      if (typeof hljs === 'undefined' || !el) return;
+      try { hljs.highlightElement(el); } catch (e) {}
+    }
+
+    // Highlight all language-* code blocks inside a container
+    function highlightCodeIn(container) {
+      if (typeof hljs === 'undefined' || !container) return;
+      var codes = container.querySelectorAll('pre code[class*="language-"]');
+      for (var i = 0; i < codes.length; i++) {
+        try { hljs.highlightElement(codes[i]); } catch (e) {}
+      }
+    }
+
+    // Render tool args into the .tool-card-args pane
+    // Handles write_file (path + content), edit_file (path + old/new diff),
+    // bash (command), read_file / list_files (path only)
+    function updateToolCardArgs(card, toolName, args) {
+      var pane = card.querySelector('.tool-card-args');
+      if (!pane) return;
+      pane.style.display = 'block';
+      var pathArg = args.path || args.file || '';
+      var html = '';
+
+      if (toolName === 'write_file') {
+        if (pathArg) html += '<div class="tool-card-args-path">' + esc(pathArg) + '</div>';
+        var content = (args.content != null) ? String(args.content) : '';
+        var lang = detectLang(pathArg);
+        html += '<pre><code class="language-' + lang + '">' + esc(content) + '</code></pre>';
+      } else if (toolName === 'edit_file') {
+        if (pathArg) html += '<div class="tool-card-args-path">' + esc(pathArg) + '</div>';
+        var oldStr = (args.old_string != null) ? String(args.old_string) : '';
+        var newStr = (args.new_string != null) ? String(args.new_string) : '';
+        html += '<pre>' + renderInlineDiff(oldStr, newStr) + '</pre>';
+      } else if (toolName === 'bash') {
+        var cmd = (args.command != null) ? String(args.command) : '';
+        html += '<pre><code class="language-bash">' + esc(cmd) + '</code></pre>';
+      } else if (toolName === 'read_file' || toolName === 'list_files') {
+        if (pathArg) html += '<div class="tool-card-args-path">' + esc(pathArg) + '</div>';
+      } else if (args && Object.keys(args).length > 0) {
+        // Generic: show JSON preview for other tools
+        try {
+          html += '<pre><code class="language-json">' + esc(JSON.stringify(args, null, 2)) + '</code></pre>';
+        } catch (e) {}
+      }
+
+      pane.innerHTML = html;
+      // hljs the rendered code block
+      var codeEl = pane.querySelector('code');
+      if (codeEl) highlightCode(codeEl);
+      scrollToBottom();
+    }
+
+    // Render old/new as inline diff: '- ' red lines for old, '+ ' green for new
+    function renderInlineDiff(oldStr, newStr) {
+      var oldLines = oldStr.split('\n');
+      var newLines = newStr.split('\n');
+      var out = '';
+      for (var i = 0; i < oldLines.length; i++) {
+        out += '<span class="diff-line-del">- ' + esc(oldLines[i]) + '</span>';
+      }
+      for (var j = 0; j < newLines.length; j++) {
+        out += '<span class="diff-line-add">+ ' + esc(newLines[j]) + '</span>';
+      }
+      return out;
+    }
+
+    // Render tool result text, detecting structured diff markers and colorizing
+    // ('+ Added ...', '- Deleted ...', '~ Modified ...', '  + line', '  - line')
+    function renderToolResult(el, text) {
+      if (!text) { el.textContent = ''; return; }
+      // Split text into: main content, [Syntax OK] / SYNTAX CHECK FAILED, <diagnostics> blocks
+      var diagRegex = /<diagnostics file="([^"]*)">([\s\S]*?)<\/diagnostics>/g;
+      var syntaxOkRegex = /\[Syntax OK\]/;
+      var syntaxFailRegex = /SYNTAX CHECK FAILED:\n([\s\S]*?)\nFix the errors before proceeding\./;
+      var parts = [];
+      var lastIdx = 0;
+      var m;
+      // Extract diagnostics blocks
+      while ((m = diagRegex.exec(text)) !== null) {
+        if (m.index > lastIdx) parts.push({ type: 'text', content: text.slice(lastIdx, m.index) });
+        parts.push({ type: 'diag', file: m[1], content: m[2].trim() });
+        lastIdx = m.index + m[0].length;
+      }
+      if (lastIdx < text.length) parts.push({ type: 'text', content: text.slice(lastIdx) });
+      // Build HTML
+      var html = '';
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        if (p.type === 'diag') {
+          var lines = p.content.split('\n');
+          html += '<div class="lsp-diagnostics">';
+          html += '<div class="lsp-diagnostics-file">\u26A0 LSP: ' + esc(p.file) + '</div>';
+          for (var j = 0; j < lines.length; j++) {
+            var ln = lines[j].trim();
+            if (!ln) continue;
+            if (/^WARN\b/.test(ln) || /^\.\.\./.test(ln)) {
+              html += '<span class="lsp-diag-line lsp-diag-warn">' + esc(ln) + '</span>';
+            } else {
+              html += '<span class="lsp-diag-line lsp-diag-error">' + esc(ln) + '</span>';
+            }
+          }
+          html += '</div>';
+        } else {
+          var t = p.content;
+          // Handle syntax check results
+          var sfMatch = t.match(syntaxFailRegex);
+          if (sfMatch) {
+            t = t.replace(syntaxFailRegex, '');
+            html += '<div class="lsp-syntax-fail">SYNTAX CHECK FAILED:\n' + esc(sfMatch[1]) + '\nFix the errors before proceeding.</div>';
+          }
+          var soMatch = t.match(syntaxOkRegex);
+          if (soMatch) {
+            t = t.replace(syntaxOkRegex, '');
+            html += '<div class="lsp-syntax-ok">✓ Syntax OK</div>';
+          }
+          t = t.trim();
+          if (t) {
+            var capped = t.length > 4000 ? t.slice(0, 4000) + '\n…(truncated)' : t;
+            if (/\n\s*[+\-~] /.test(capped) || /Modified \d+ line/.test(capped)) {
+              var dlines = capped.split('\n');
+              for (var k = 0; k < dlines.length; k++) {
+                var dln = dlines[k];
+                var dtrimmed = dln.trim();
+                if (/^\+ /.test(dtrimmed) || /^\+[^+]/.test(dtrimmed)) {
+                  html += '<span class="diff-line-add">' + esc(dln) + '</span>';
+                } else if (/^- /.test(dtrimmed) || /^-[^-]/.test(dtrimmed)) {
+                  html += '<span class="diff-line-del">' + esc(dln) + '</span>';
+                } else if (/^~ /.test(dtrimmed)) {
+                  html += '<span class="diff-line-mod">' + esc(dln) + '</span>';
+                } else {
+                  html += '<span class="diff-line-ctx">' + esc(dln) + '</span>';
+                }
+              }
+            } else {
+              html += '<span style="white-space:pre-wrap">' + esc(capped) + '</span>';
+            }
+          }
+        }
+      }
+      el.innerHTML = '<pre style="margin:0">' + html + '</pre>';
+    }
+
     function renderMarkdown(text) {
       if (!text) return '';
       text = stripLeakedXML(text);
@@ -5301,7 +5706,7 @@
       var el = document.getElementById('wifiStatus');
       el.className = 'wifi-status-box';
       el.innerHTML = currentLang === 'zh' ? '检测中...' : 'Checking...';
-      fetch('/api/wifi/status').then(function(r) { return r.json(); }).then(function(d) {
+      piFetch('/api/wifi/status').then(function(r) { return r.json(); }).then(function(d) {
         if (d.hotspot) {
           el.className = 'wifi-status-box ap';
           el.innerHTML = '<strong>' + (currentLang === 'zh' ? '热点模式' : 'Hotspot Mode') + '</strong>' +
@@ -5337,7 +5742,7 @@
       document.getElementById('wifiConnect').style.display = 'none';
       _wifiSSID = null;
 
-      fetch('/api/wifi/scan').then(function(r) { return r.json(); }).then(function(d) {
+      piFetch('/api/wifi/scan').then(function(r) { return r.json(); }).then(function(d) {
         if (!d.networks || !d.networks.length) {
           el.innerHTML = '<div class="wifi-empty">' + (currentLang === 'zh' ? '未发现 WiFi' : 'No networks found') + '</div>';
           return;
@@ -5383,7 +5788,7 @@
       var oldHost = location.hostname;
       var port = location.port || '3000';
 
-      fetch('/api/wifi/connect', {
+      piFetch('/api/wifi/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ssid: targetSSID, password: pwd })
@@ -5611,7 +6016,7 @@
     // Pre-fetch current session via HTTP immediately (don't wait for WebSocket)
     // This eliminates the empty→full visual jump on page load
     if (currentSessionId) {
-      fetch('/api/sessions/' + encodeURIComponent(currentSessionId))
+      piFetch('/api/sessions/' + encodeURIComponent(currentSessionId))
         .then(function(r) { return r.ok ? r.json() : null; })
         .then(function(session) {
           if (session && session.id === currentSessionId) {
