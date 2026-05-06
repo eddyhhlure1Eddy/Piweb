@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  piweb:
+    image: node:20-slim
+    container_name: piweb
+    working_dir: /app
+    volumes:
+      - /volume1/docker/piweb:/app
+    ports:
+      - "3300:3000"
+    environment:
+      - NODE_OPTIONS="--experimental-global-webcrypto"
+    command: >
+      /bin/sh -c "npm pkg delete scripts.prepare && 
+                  npm config set registry https://registry.npmmirror.com && 
+                  npm install && 
+                  node dist/index.js"
+    restart: always
+    tty: true
