@@ -1,0 +1,52 @@
+node_modules/
+
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+piweb.config.json
+daemon.config.json
+*.local.json
+.peer_secret
+**/.peer_secret
+
+# Runtime/user data
+data/*
+!data/.gitkeep
+grids/*
+!grids/.gitkeep
+workplace/*
+!workplace/.gitkeep
+docs/*
+!docs/.gitkeep
+skills/*
+!skills/.gitkeep
+self-tools/
+logs/
+output/
+
+# Generated artifacts and archives
+*.log
+*.bak
+*.bak.*
+*.bak_*
+*.backup
+*.old
+__pycache__/
+*.pyc
+*.pyo
+*.exe
+*.rar
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# Source is not part of the runtime release
+src/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

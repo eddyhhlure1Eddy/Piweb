@@ -1,0 +1,15 @@
+[Unit]
+Description=PiWeb WiFi Relay — background WiFi switch daemon
+After=network.target mihomo.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/piweb
+ExecStart=/usr/bin/python3 /opt/piweb/tools/wifi-relay.py
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
