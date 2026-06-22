@@ -51,8 +51,8 @@ Unlike cloud-only chatbots, PIweb runs **locally on your hardware**, giving you 
 
 | Tier | Models | Why |
 |------|--------|-----|
-| **Best** | Claude Sonnet 4 / Opus | Best tool-use, agentic reasoning, and multimodal understanding. PIweb is optimized for Claude. |
-| **Budget-friendly** | Qwen 3.5 (DashScope) | Strong multimodal + tool-use at very low cost. Best price-performance ratio. |
+| **Best** | GLM-5.2 (z.ai) | Best balance of tool-use, agentic reasoning, and multimodal understanding. PIweb is optimized for GLM-5.2. |
+| **Budget-friendly** | GLM-5.2-Air / GLM-4.5 (z.ai) | Strong multimodal + tool-use at very low cost. Best price-performance ratio. |
 | **Local** | Qwen 2.5 72B, Llama 3.3 70B | Good for privacy-first setups with capable hardware. |
 
 > **Not recommended:** Models without multimodal support or weak autonomous agent capabilities (e.g., small quantized models, text-only models). PIweb relies heavily on tool-use and multi-step reasoning — weaker models will produce poor results.
