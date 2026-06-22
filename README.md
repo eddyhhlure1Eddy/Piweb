@@ -53,8 +53,9 @@ Unlike cloud-only chatbots, PIweb runs **locally on your hardware**, giving you 
 |------|--------|-----|
 | **Best** | GLM-5.2 (z.ai) | Best balance of tool-use, agentic reasoning, and multimodal understanding. PIweb is optimized for GLM-5.2. |
 | **Budget-friendly** | Qwen 3.7 (DashScope) | Strong multimodal + tool-use at very low cost. Best price-performance ratio. |
-| **Local** | Qwen 3.7 | Good for privacy-first setups with capable hardware. |
 
+> **Local models** — Choose any local backend you prefer (Ollama, vLLM, SGLang, LM Studio, etc.). PIweb auto-detects the model name from the server — zero config for local deployments.
+>
 > **Not recommended:** Models without multimodal support or weak autonomous agent capabilities (e.g., small quantized models, text-only models). PIweb relies heavily on tool-use and multi-step reasoning — weaker models will produce poor results.
 
 ### Three Running Modes
