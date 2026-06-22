@@ -25,7 +25,7 @@ All notable changes to PIweb will be documented in this file.
 ### Improvements
 - **Static Asset Router** — `web.ts` serves 7 static paths (favicon, icons, manifest, sw.js) with proper MIME types and cache headers
 - **Cache Strategy** — `sw.js` uses `no-cache` for instant updates; icons/manifest use `max-age=86400`
-- **Three-Device Deployment** — Verified and deployed across Old Pi (.54), New Pi (.39), WalnutPi (.198)
+- **Three-Device Deployment** — Verified and deployed across three Raspberry Pi devices (Old Pi, New Pi, WalnutPi)
 
 ### Technical Details
 - `src/web.ts`: Replaced single favicon 204 handler with `staticFiles` map routing
@@ -54,7 +54,7 @@ All notable changes to PIweb will be documented in this file.
 ## [2.0.5] - 2026-03-08
 
 ### Changes
-- Config switch: FunnyPi -> Local SGLang (`http://192.168.31.201:8000/v1`)
+- Config switch: FunnyPi -> Local SGLang (`http://<local-sglang-host>:8000/v1`)
 - Removed proxy environment variables from `piweb.service` (fix `fetch failed` with local backend)
 - Restored Pi Service button in `index.html` from backup
 - Removed all Claude -> GLM-5 automatic fallback logic from `agent.ts` and `scheduler.ts`
