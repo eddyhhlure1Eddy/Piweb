@@ -6,6 +6,10 @@
 ![Node](https://img.shields.io/badge/node-%3E%3D18-green)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20(RPi)-lightgrey)
+<img width="360" height="202" alt="VID_20260701_233231" src="https://github.com/user-attachments/assets/44eb4f3e-279d-4456-b022-95ff0943e8cf" />
+<img width="360" height="202" alt="VID_20260701_233327" src="https://github.com/user-attachments/assets/0465bf73-8654-4a8a-b980-4569f880ba3a" />
+<img width="1307" height="1037" alt="ClipboardImg-20260701083605-0" src="https://github.com/user-attachments/assets/c111970c-02cb-4fbe-965c-b5ffd76fe36a" />
+
 
 ---
 
